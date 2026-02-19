@@ -38,3 +38,16 @@ export function uid() {
   // простая уникалка без библиотек
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
+
+export type TimeMode = "fixed" | "stopwatch";
+
+const MODE_KEY = "deepwork.timeMode.v1";
+
+export function loadTimeMode(): TimeMode {
+  const v = localStorage.getItem(MODE_KEY);
+  return v === "stopwatch" ? "stopwatch" : "fixed";
+}
+
+export function saveTimeMode(mode: TimeMode) {
+  localStorage.setItem(MODE_KEY, mode);
+}
