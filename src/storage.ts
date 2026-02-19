@@ -51,3 +51,34 @@ export function loadTimeMode(): TimeMode {
 export function saveTimeMode(mode: TimeMode) {
   localStorage.setItem(MODE_KEY, mode);
 }
+
+export type TimerSnapshot = {
+  phase: "focus" | "break";
+  running: boolean;
+  seconds: number; // fixed: осталось, stopwatch: прошло
+  sessionStartedAt: number | null;
+  lastUpdatedAt: number; // Date.now() в момент сохранения seconds
+};
+
+const FIXED_SNAPSHOT_KEY = "deepwork.timer.fixed.v1";
+const STOPWATCH_SNAPSHOT_KEY = "deepwork.timer.stopwatch.v1";
+
+function snapshotKey(mode: TimeMode) {
+  return mode === "fixed" ? FIXED_SNAPSHOT_KEY : STOPWATCH_SNAPSHOT_KEY;
+}
+
+export function loadTimerSnapshot(mode: TimeMode): TimerSnapshot | null {
+  try {
+    const raw = localStorage.getItem(snapshotKey(mode));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed as TimerSnapshot;
+  } catch {
+    return null;
+  }
+}
+
+export function saveTimerSnapshot(mode: TimeMode, snap: TimerSnapshot) {
+  localStorage.setItem(snapshotKey(mode), JSON.stringify(snap));
+}
