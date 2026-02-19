@@ -161,6 +161,7 @@ export default function App() {
   useEffect(() => {
     tg?.ready();
     tg?.expand();
+    tg?.disableVerticalSwipes?.();
   }, [tg]);
 
   // Load persisted

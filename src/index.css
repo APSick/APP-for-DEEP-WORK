@@ -1,3 +1,24 @@
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;       /* убирает скролл документа */
+}
+
+body {
+  background: #000;
+  overscroll-behavior: none;  /* убирает “резинку” */
+  touch-action: pan-y;        /* запрещает горизонтальные жесты */
+  -webkit-text-size-adjust: 100%;
+}
+
+#root {
+  position: fixed;  /* фиксируем приложение внутри экрана */
+  inset: 0;
+  overflow: hidden;
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
