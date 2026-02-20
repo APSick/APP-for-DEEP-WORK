@@ -1,16 +1,6 @@
 /* src/App.css */
 
-/* ===== Global lock (убираем сдвиги, серые щели, скролл в стороны) ===== */
-html, body, #root {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  background: #060607;
-  overflow: hidden;
-}
-* { box-sizing: border-box; }
-button, input { font-family: inherit; }
-
+/* ===== CSS переменные приложения ===== */
 :root {
   --bg0: #060607;
   --bg1: #0b0b0d;
@@ -112,86 +102,56 @@ button, input { font-family: inherit; }
 .screen{
   flex: 1 1 auto;
   min-height: 0;
-  padding: 10px 16px 140px;
-  max-width: 460px;
+  padding: 8px 12px 120px;
+  max-width: 100%;
   margin: 0 auto;
   width: 100%;
 
-  /* разрешить вертикальный скролл, скрыть горизонтальный */
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  touch-action: auto;
-  
-  /* гладкий скролл */
-  scroll-behavior: smooth;
+  /* главное: никакого скролла */
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Адаптация под разные устройства */
-/* Маленькие телефоны (до 390px) */
-@media (max-width: 389px) {
+/* Маленькие телефоны (до 360px) */
+@media (max-width: 359px) {
   .screen {
-    max-width: 95%;
-    padding: 10px 12px 140px;
+    padding: 6px 10px 110px;
   }
 }
 
-/* Телефоны (390px - 480px) */
-@media (min-width: 390px) and (max-width: 480px) {
+/* Телефоны (360px - 480px) */
+@media (min-width: 360px) and (max-width: 480px) {
   .screen {
-    max-width: 96%;
-    padding: 10px 14px 140px;
+    padding: 8px 12px 115px;
   }
 }
 
-/* Обычные телефоны (480px - 600px) */
+/* Средние телефоны (480px - 600px) */
 @media (min-width: 480px) and (max-width: 600px) {
   .screen {
-    max-width: 450px;
-    padding: 10px 16px 140px;
-  }
-}
-
-/* Планшеты и больше (600px+) */
-@media (min-width: 600px) {
-  .screen {
     max-width: 480px;
-    padding: 12px 20px 150px;
+    padding: 10px 14px 120px;
   }
 }
 
-/* Большие планшеты и десктоп (900px+) */
+/* Планшеты (600px - 900px) */
+@media (min-width: 600px) and (max-width: 900px) {
+  .screen {
+    max-width: 600px;
+    padding: 12px 16px 120px;
+  }
+}
+
+/* Большие экраны (900px+) */
 @media (min-width: 900px) {
   .screen {
-    max-width: 520px;
-    padding: 14px 24px 160px;
+    max-width: 700px;
+    padding: 14px 18px 120px;
   }
-}
-
-
-
-/* Стилизация скролл-бара для .screen */
-.screen::-webkit-scrollbar {
-  width: 6px;
-}
-
-.screen::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.screen::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-}
-
-.screen::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-/* Firefox */
-.screen {
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  scrollbar-width: thin;
 }
 
 

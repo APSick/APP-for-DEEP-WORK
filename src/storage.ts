@@ -53,6 +53,46 @@ const KEY_TIME = "dw_time_mode_v2";
 // старый ключ (если у тебя раньше было другое имя — это ок, мы мигрируем по структуре)
 const LEGACY_TIME_KEYS = ["dw_time_v1", "dw_time_mode_v1", "dw_time_v0"];
 
+/**
+ * Проверяет доступность localStorage в текущем окружении
+ */
+function isLocalStorageAvailable(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const test = "__localStorage_test__";
+    localStorage.setItem(test, test);
+    localStorage.removeItem(test);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Безопасное получение значения из localStorage
+ */
+function safeGetItem(key: string): string | null {
+  if (!isLocalStorageAvailable()) return null;
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Безопасное сохранение значения в localStorage
+ */
+function safeSetItem(key: string, value: string): boolean {
+  if (!isLocalStorageAvailable()) return false;
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function safeJsonParse<T>(s: string | null): T | null {
   if (!s) return null;
   try {
@@ -67,24 +107,24 @@ export function uid(): string {
 }
 
 export function loadHistory(): Session[] {
-  const v = safeJsonParse<Session[]>(localStorage.getItem(KEY_HISTORY));
+  const v = safeJsonParse<Session[]>(safeGetItem(KEY_HISTORY));
   return Array.isArray(v) ? v : [];
 }
 
 export function saveHistory(items: Session[]) {
-  localStorage.setItem(KEY_HISTORY, JSON.stringify(items));
+  safeSetItem(KEY_HISTORY, JSON.stringify(items));
 }
 
 export function loadTask(): string {
-  return localStorage.getItem(KEY_TASK) ?? "";
+  return safeGetItem(KEY_TASK) ?? "";
 }
 
 export function saveTask(task: string) {
-  localStorage.setItem(KEY_TASK, task ?? "");
+  safeSetItem(KEY_TASK, task ?? "");
 }
 
 export function loadProjects(): Project[] {
-  const v = safeJsonParse<Project[]>(localStorage.getItem(KEY_PROJECTS));
+  const v = safeJsonParse<Project[]>(safeGetItem(KEY_PROJECTS));
   if (Array.isArray(v) && v.length) return v;
 
   // дефолтный набор как на твоих скринах
@@ -96,21 +136,21 @@ export function loadProjects(): Project[] {
     { id: "training", name: "Тренировка" },
     { id: "other", name: "Другое" },
   ];
-  localStorage.setItem(KEY_PROJECTS, JSON.stringify(def));
-  localStorage.setItem(KEY_ACTIVE_PROJECT, def[0].id);
+  safeSetItem(KEY_PROJECTS, JSON.stringify(def));
+  safeSetItem(KEY_ACTIVE_PROJECT, def[0].id);
   return def;
 }
 
 export function saveProjects(items: Project[]) {
-  localStorage.setItem(KEY_PROJECTS, JSON.stringify(items));
+  safeSetItem(KEY_PROJECTS, JSON.stringify(items));
 }
 
 export function loadActiveProjectId(): string {
-  return localStorage.getItem(KEY_ACTIVE_PROJECT) ?? "";
+  return safeGetItem(KEY_ACTIVE_PROJECT) ?? "";
 }
 
 export function saveActiveProjectId(id: string) {
-  localStorage.setItem(KEY_ACTIVE_PROJECT, id);
+  safeSetItem(KEY_ACTIVE_PROJECT, id);
 }
 
 /**
@@ -129,7 +169,7 @@ type LegacyTimeSnapshot = {
   startedAt?: number;
 };
 
-function defaultPhaseTimer(min: number, active: TimerKind = "stopwatch"): PhaseTimer {
+export function defaultPhaseTimer(min: number, active: TimerKind = "stopwatch"): PhaseTimer {
   return {
     active,
     countdownMin: min,
@@ -140,20 +180,20 @@ function defaultPhaseTimer(min: number, active: TimerKind = "stopwatch"): PhaseT
 
 export function loadTimeMode(): TimeModeSnapshotV2 | null {
   // новый ключ
-  const v2 = safeJsonParse<TimeModeSnapshotV2>(localStorage.getItem(KEY_TIME));
+  const v2 = safeJsonParse<TimeModeSnapshotV2>(safeGetItem(KEY_TIME));
   if (v2?.v === 2) return v2;
 
   // пробуем найти legacy
   let legacyRaw: string | null = null;
   for (const k of LEGACY_TIME_KEYS) {
-    const v = localStorage.getItem(k);
+    const v = safeGetItem(k);
     if (v) {
       legacyRaw = v;
       break;
     }
   }
   // иногда legacy могли сохранить и под KEY_TIME, но без v:2
-  if (!legacyRaw) legacyRaw = localStorage.getItem(KEY_TIME);
+  if (!legacyRaw) legacyRaw = safeGetItem(KEY_TIME);
 
   const legacy = safeJsonParse<LegacyTimeSnapshot>(legacyRaw);
   if (!legacy || (legacy.mode !== "fixed" && legacy.mode !== "stopwatch")) return null;
@@ -193,7 +233,7 @@ export function loadTimeMode(): TimeModeSnapshotV2 | null {
 }
 
 export function saveTimeMode(snapshot: TimeModeSnapshotV2) {
-  localStorage.setItem(KEY_TIME, JSON.stringify(snapshot));
+  safeSetItem(KEY_TIME, JSON.stringify(snapshot));
 }
 
 export function clampInt(n: number, min: number, max: number): number {

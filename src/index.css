@@ -1,103 +1,49 @@
+/* ===== Глобальные ресеты и базовые стили ===== */
+
+/* Базовые ресеты для html, body, #root */
 html, body, #root {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;       /* убирает скролл документа */
+  overflow: hidden; /* убирает скролл документа */
 }
 
 body {
-  background: #000;
-  overscroll-behavior: none;  /* убирает “резинку” */
-  touch-action: pan-y;        /* запрещает горизонтальные жесты */
+  background: #060607;
+  overscroll-behavior: none; /* убирает "резинку" */
+  touch-action: pan-y; /* запрещает горизонтальные жесты */
   -webkit-text-size-adjust: 100%;
 }
 
 #root {
-  position: fixed;  /* фиксируем приложение внутри экрана */
+  position: fixed; /* фиксируем приложение внутри экрана */
   inset: 0;
   overflow: hidden;
 }
 
+/* Базовые настройки типографики */
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
+  
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+/* Базовые ресеты для элементов */
+* {
+  box-sizing: border-box;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
+button, input {
   font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
-
-html, body, #root {
-  height: 100%;
-}
-
-body {
-  margin: 0;
-  -webkit-text-size-adjust: 100%;
-}
-
-/* чтобы контент не залезал под “чёлку”/панели */
+/* Утилиты для safe area и высоты */
 .safe {
   padding-top: env(safe-area-inset-top);
   padding-right: env(safe-area-inset-right);
@@ -105,17 +51,6 @@ body {
   padding-left: env(safe-area-inset-left);
 }
 
-/* лучше, чем 100vh на мобилках */
 .fullHeight {
   min-height: 100dvh;
 }
-
-html, body, #root { height: 100%; }
-.safe {
-  padding-top: env(safe-area-inset-top);
-  padding-right: env(safe-area-inset-right);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-}
-.fullHeight { min-height: 100dvh; }
-
