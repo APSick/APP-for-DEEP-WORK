@@ -108,12 +108,19 @@ button, input { font-family: inherit; }
 
 /* Важно: контент НЕ под нижней панелью */
 .screen{
-  padding: 10px 16px calc(var(--navSpace) + env(safe-area-inset-bottom));
+  padding: 10px 16px calc(var(--navSpace) + env(safe-area-inset-bottom) + 26px);
   max-width: 460px;
   margin: 0 auto;
-  overflow: hidden;
-  touch-action: none;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+
+  touch-action: pan-y;
 }
+
 
 .glass{
   background: linear-gradient(180deg, var(--glass), var(--glass2));
@@ -184,6 +191,11 @@ button, input { font-family: inherit; }
   cursor: pointer;
 }
 .modeInfoText{ font-weight: 800; opacity: 0.9; }
+
+.modeInfoText{
+  white-space: nowrap;
+}
+
 
 /* ===== dropdown ===== */
 .dropdownWrap{ position: relative; }
@@ -405,15 +417,19 @@ button, input { font-family: inherit; }
   position: fixed;
   inset: 0;
   z-index: 120;
-  background: rgba(0,0,0,0.35);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+
   touch-action: none;
 }
+
 
 .modal{
   width: min(420px, calc(100vw - 32px));
@@ -531,7 +547,19 @@ button, input { font-family: inherit; }
   justify-content: space-between;
 }
 
-@media (max-width: 420px){
-  .taskRow{ flex-direction: column; align-items: stretch; }
-  .taskTagClickable{ width: 100%; text-align: center; }
+
+.timeMenuSheet{
+  position: fixed;
+  left: 16px;
+  right: 16px;
+
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  max-width: 460px;
+  margin: 0 auto;
+
+  max-height: calc(100dvh - 220px);
+  overflow-y: auto;
+
+  z-index: 80; /* ниже bottomNav (у неё z-index 90) */
+  padding-bottom: calc(var(--navSpace) - 20px); /* чтобы низ меню не прятался */
 }

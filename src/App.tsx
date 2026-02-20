@@ -493,7 +493,7 @@ export default function App() {
                 </button>
 
                 {timerMenuOpen && (
-                  <div className="glassMenu rightMenu">
+                  <div className="glassMenu timeMenuSheet">
                     <div className="menu">
                       <button
                         className={`menuItem ${pt.active === "stopwatch" ? "menuActive" : ""}`}
