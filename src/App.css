@@ -67,12 +67,12 @@
   display:flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 14px 8px;
+  padding: 11px 13px 8px;
 }
 .brand{
   font-weight: 900;
   letter-spacing: 0.2px;
-  font-size: 17px;
+  font-size: 16px;
   opacity: 0.92;
 }
 .topRight{
@@ -81,16 +81,16 @@
   align-items:center;
 }
 .userPill{
-  padding: 8px 12px;
+  padding: 8px 11px;
   border-radius: 999px;
   background: var(--glass2);
   border: 1px solid var(--stroke2);
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11px;
 }
 .avatar{
-  width: 31px;
-  height: 31px;
+  width: 29px;
+  height: 29px;
   border-radius: 999px;
   background:
     radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), transparent 60%),
@@ -163,65 +163,65 @@
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 18px 60px rgba(0,0,0,0.45);
 }
-.card{ padding: 15px; }
+.card{ padding: 14px; }
 .focusCard{ 
   display:flex; 
   flex-direction: column;
-  padding-bottom: 20px;
+  padding-bottom: 19px;
 }
 
-.cardHeader{ display:flex; justify-content: space-between; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
-.cardTitle{ font-size: 24px; font-weight: 950; letter-spacing: -0.2px; }
+.cardHeader{ display:flex; justify-content: space-between; margin-bottom: 9px; gap: 9px; flex-wrap: wrap; }
+.cardTitle{ font-size: 23px; font-weight: 950; letter-spacing: -0.2px; }
 .row{ display:flex; align-items:center; }
 .between{ justify-content: space-between; }
 .gap12{ gap: 12px; }
 
 .miniStat{
-  min-width: 75px;
+  min-width: 71px;
   text-align: center;
-  padding: 8px 10px;
-  border-radius: 15px;
+  padding: 8px 9px;
+  border-radius: 14px;
   border: 1px solid var(--stroke2);
   background: rgba(255,255,255,0.04);
 }
 .miniStatLabel{ font-size: 10px; opacity: 0.65; }
-.miniStatValue{ font-size: 15px; font-weight: 950; margin-top: 2px; }
+.miniStatValue{ font-size: 14px; font-weight: 950; margin-top: 2px; }
 
 .taskRow{
   display:flex;
   gap: 8px;
   align-items:center;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 9px;
+  margin-bottom: 9px;
 }
 .taskInput{
   flex: 1;
-  padding: 12px 14px;
-  border-radius: 19px;
+  padding: 11px 13px;
+  border-radius: 18px;
   border: 1px solid var(--stroke2);
   background: rgba(255,255,255,0.04);
   color: var(--text);
   outline: none;
-  font-size: 14px;
+  font-size: 13px;
   touch-action: manipulation;
 }
 .taskInput::placeholder{ color: rgba(255,255,255,0.42); }
 
 .taskTag{
-  padding: 10px 12px;
+  padding: 9px 11px;
   border-radius: 999px;
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255, 234, 102, 0.28);
   font-weight: 900;
   white-space: nowrap;
   color: var(--text);
-  font-size: 14px;
+  font-size: 13px;
 }
 .taskTagClickable{ cursor: pointer; }
 
 .modeInfo{
   flex:1;
-  padding: 10px 12px;
+  padding: 9px 11px;
   border-radius: 999px;
   border: 1px solid var(--stroke2);
   background: rgba(255,255,255,0.04);
@@ -233,7 +233,7 @@
   font-weight: 800; 
   opacity: 0.9; 
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 
@@ -243,14 +243,14 @@
   display:flex;
   align-items:center;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 8px 9px;
   border-radius: 999px;
   border: 1px solid var(--stroke2);
   background: rgba(255,255,255,0.04);
   color: var(--text);
   font-weight: 900;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
 }
 .pillText{ opacity: 0.92; }
 .caret{ opacity: 0.75; }
@@ -294,17 +294,17 @@
 
 /* ===== Ring ===== */
 .centerArea{
-  margin-top: 12px;
-  margin-bottom: 25px;
+  margin-top: 11px;
+  margin-bottom: 24px;
   display:flex;
   flex-direction: column;
   align-items:center;
-  gap: 12px;
+  gap: 11px;
 }
 .ring{
   /* ключевой фикс: размер зависит от высоты экрана => не лезет под нижнюю панель */
-  width: min(178px, 58vw, 24vh);
-  height: min(178px, 58vw, 24vh);
+  width: min(169px, 55vw, 23vh);
+  height: min(169px, 55vw, 23vh);
   border-radius: 999px;
   position: relative;
   background:
@@ -327,7 +327,7 @@
 
 .ringButton{
   position:absolute;
-  inset: clamp(14px, 4vw, 19px);
+  inset: clamp(13px, 3.8vw, 18px);
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.14);
   background: rgba(0,0,0,0.22);
@@ -342,41 +342,41 @@
   z-index: 1;
   touch-action: manipulation;
 }
-.ringLabel{ font-weight: 1000; letter-spacing: 2px; font-size: 17px; }
-.ringTime{ font-weight: 1000; font-size: clamp(27px, 8.5vw, 34px); letter-spacing: 1px; }
-.ringSub{ margin-top: 5px; font-size: 11px; opacity: 0.65; font-weight: 800; }
+.ringLabel{ font-weight: 1000; letter-spacing: 2px; font-size: 16px; }
+.ringTime{ font-weight: 1000; font-size: clamp(26px, 8vw, 32px); letter-spacing: 1px; }
+.ringSub{ margin-top: 5px; font-size: 10px; opacity: 0.65; font-weight: 800; }
 
 .actionsRow{ 
   display:flex; 
   gap: 8px; 
   width: 100%; 
   justify-content: center;
-  margin-bottom: 17px;
+  margin-bottom: 16px;
 }
 .btnGhost{
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 9px 11px;
+  border-radius: 11px;
   border: 1px solid rgba(255,255,255,0.14);
   background: rgba(255,255,255,0.05);
   color: var(--text);
   font-weight: 950;
   cursor: pointer;
-  min-height: 37px;
-  font-size: 14px;
+  min-height: 35px;
+  font-size: 13px;
   touch-action: manipulation;
 }
 .btnGhost:disabled{ opacity: 0.45; cursor: not-allowed; }
 
 .btnDanger{
-  padding: 10px 12px;
-  border-radius: 12px;
+  padding: 9px 11px;
+  border-radius: 11px;
   border: 1px solid var(--dangerStroke);
   background: var(--dangerBg);
   color: var(--text);
   font-weight: 1000;
   cursor: pointer;
-  min-height: 37px;
-  font-size: 14px;
+  min-height: 35px;
+  font-size: 13px;
   touch-action: manipulation;
 }
 
