@@ -102,7 +102,7 @@
 .screen{
   flex: 1 1 auto;
   min-height: 0;
-  padding: 8px 12px 160px;
+  padding: 8px 12px 200px;
   max-width: 100%;
   margin: 0 auto;
   width: 100%;
@@ -119,14 +119,14 @@
 /* Маленькие телефоны (до 360px) */
 @media (max-width: 359px) {
   .screen {
-    padding: 6px 10px 150px;
+    padding: 6px 10px 190px;
   }
 }
 
 /* Телефоны (360px - 480px) */
 @media (min-width: 360px) and (max-width: 480px) {
   .screen {
-    padding: 8px 12px 155px;
+    padding: 8px 12px 195px;
   }
 }
 
@@ -134,7 +134,7 @@
 @media (min-width: 480px) and (max-width: 600px) {
   .screen {
     max-width: 480px;
-    padding: 10px 14px 160px;
+    padding: 10px 14px 200px;
   }
 }
 
@@ -142,7 +142,7 @@
 @media (min-width: 600px) and (max-width: 900px) {
   .screen {
     max-width: 600px;
-    padding: 12px 16px 160px;
+    padding: 12px 16px 200px;
   }
 }
 
@@ -150,7 +150,7 @@
 @media (min-width: 900px) {
   .screen {
     max-width: 700px;
-    padding: 14px 18px 160px;
+    padding: 14px 18px 200px;
   }
 }
 
@@ -164,7 +164,11 @@
   box-shadow: 0 18px 60px rgba(0,0,0,0.45);
 }
 .card{ padding: 18px; }
-.focusCard{ display:flex; flex-direction: column; }
+.focusCard{ 
+  display:flex; 
+  flex-direction: column;
+  padding-bottom: 24px;
+}
 
 .cardHeader{ display:flex; justify-content: space-between; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; }
 .cardTitle{ font-size: 28px; font-weight: 950; letter-spacing: -0.2px; }
@@ -288,7 +292,7 @@
 /* ===== Ring ===== */
 .centerArea{
   margin-top: 14px;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
   display:flex;
   flex-direction: column;
   align-items:center;
@@ -344,7 +348,7 @@
   gap: 10px; 
   width: 100%; 
   justify-content: center;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 .btnGhost{
   padding: 12px 14px;
