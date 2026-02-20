@@ -1,24 +1,35 @@
+/* src/App.css */
+
+/* ===== Global lock (убираем сдвиги, серые щели, скролл в стороны) ===== */
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: #060607;
+  overflow: hidden;
+}
+* { box-sizing: border-box; }
+button, input { font-family: inherit; }
+
 :root {
   --bg0: #060607;
   --bg1: #0b0b0d;
-
   --glass: rgba(255, 255, 255, 0.06);
   --glass2: rgba(255, 255, 255, 0.04);
   --stroke: rgba(255, 255, 255, 0.12);
   --stroke2: rgba(255, 255, 255, 0.08);
-
   --text: rgba(255, 255, 255, 0.92);
   --muted: rgba(255, 255, 255, 0.62);
 
-  --yellow: #FFE24A;
+  /* чуть ярче жёлтый */
+  --yellow: #FFEA66;
   --yellow2: #FFC800;
-
 
   --dangerStroke: rgba(255, 80, 80, 0.35);
   --dangerBg: rgba(255, 80, 80, 0.14);
-}
 
-* { box-sizing: border-box; }
+  --navSpace: 140px; /* место под нижнюю панель */
+}
 
 .appRoot {
   position: fixed;
@@ -27,31 +38,33 @@
   height: 100dvh;
   color: var(--text);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  padding: env(safe-area-inset-top) env(safe-area-inset-right)
-           env(safe-area-inset-bottom) env(safe-area-inset-left);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   overflow: hidden;
-}
 
+  /* запрет “двигать” приложение жестами (пинч/свайпы по фону) */
+  touch-action: none;
+}
 
 /* black + yellow modern background */
 .appRoot::before {
   content: "";
-  position: fixed; inset: -30%;
+  position: fixed;
+  inset: -30%;
   background:
-    radial-gradient(900px 650px at 18% 18%, rgba(255, 214, 10, 0.20), transparent 55%),
-    radial-gradient(900px 650px at 82% 30%, rgba(255, 184, 0, 0.14), transparent 60%),
-    radial-gradient(900px 650px at 50% 85%, rgba(255, 214, 10, 0.10), transparent 60%),
+    radial-gradient(900px 650px at 18% 18%, rgba(255, 234, 102, 0.22), transparent 55%),
+    radial-gradient(900px 650px at 82% 30%, rgba(255, 200, 0, 0.16), transparent 60%),
+    radial-gradient(900px 650px at 50% 85%, rgba(255, 234, 102, 0.12), transparent 60%),
     linear-gradient(180deg, rgba(10,10,12,1), rgba(6,6,7,1));
-  filter: blur(18px) saturate(1.02);
+  filter: blur(18px) saturate(1.04);
   transform: scale(1.04);
   z-index: 0;
   pointer-events: none;
 }
-
 .appRoot::after{
   content:"";
-  position: fixed; inset:0;
-  background: rgba(5, 5, 6, 0.75);
+  position: fixed;
+  inset:0;
+  background: rgba(5, 5, 6, 0.76);
   z-index: 0;
   pointer-events: none;
 }
@@ -64,18 +77,17 @@
   align-items: center;
   padding: 14px 16px 10px;
 }
-
 .brand{
   font-weight: 900;
   letter-spacing: 0.2px;
   font-size: 20px;
   opacity: 0.92;
 }
-
 .topRight{
-  display:flex; gap:10px; align-items:center;
+  display:flex;
+  gap:10px;
+  align-items:center;
 }
-
 .userPill{
   padding: 10px 14px;
   border-radius: 999px;
@@ -84,21 +96,23 @@
   font-weight: 700;
   font-size: 14px;
 }
-
 .avatar{
   width: 36px;
   height: 36px;
   border-radius: 999px;
   background:
     radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), transparent 60%),
-    linear-gradient(135deg, rgba(255, 214, 10, 0.55), rgba(255, 184, 0, 0.25));
+    linear-gradient(135deg, rgba(255, 234, 102, 0.55), rgba(255, 200, 0, 0.25));
   border: 1px solid rgba(255,255,255,0.18);
 }
 
+/* Важно: контент НЕ под нижней панелью */
 .screen{
-  padding: 10px 16px 92px;
+  padding: 10px 16px calc(var(--navSpace) + env(safe-area-inset-bottom));
   max-width: 460px;
   margin: 0 auto;
+  overflow: hidden;
+  touch-action: none;
 }
 
 .glass{
@@ -109,17 +123,11 @@
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 18px 60px rgba(0,0,0,0.45);
 }
-
 .card{ padding: 18px; }
+.focusCard{ display:flex; flex-direction: column; }
 
-.cardHeader{ display:flex; justify-content: space-between; margin-bottom: 12px; }
-
-.cardTitle{
-  font-size: 28px;
-  font-weight: 950;
-  letter-spacing: -0.2px;
-}
-
+.cardHeader{ display:flex; justify-content: space-between; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; }
+.cardTitle{ font-size: 28px; font-weight: 950; letter-spacing: -0.2px; }
 .row{ display:flex; align-items:center; }
 .between{ justify-content: space-between; }
 .gap12{ gap: 12px; }
@@ -132,7 +140,6 @@
   border: 1px solid var(--stroke2);
   background: rgba(255,255,255,0.04);
 }
-
 .miniStatLabel{ font-size: 12px; opacity: 0.65; }
 .miniStatValue{ font-size: 18px; font-weight: 950; margin-top: 2px; }
 
@@ -143,7 +150,6 @@
   margin-top: 12px;
   margin-bottom: 12px;
 }
-
 .taskInput{
   flex: 1;
   padding: 14px 16px;
@@ -153,22 +159,19 @@
   color: var(--text);
   outline: none;
   font-size: 16px;
+  touch-action: manipulation;
 }
-
 .taskInput::placeholder{ color: rgba(255,255,255,0.42); }
 
 .taskTag{
   padding: 12px 14px;
   border-radius: 999px;
   background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255, 214, 10, 0.25);
+  border: 1px solid rgba(255, 234, 102, 0.28);
   font-weight: 900;
   white-space: nowrap;
 }
-
-.taskTagClickable{
-  cursor: pointer;
-}
+.taskTagClickable{ cursor: pointer; }
 
 .modeInfo{
   flex:1;
@@ -176,18 +179,14 @@
   border-radius: 999px;
   border: 1px solid var(--stroke2);
   background: rgba(255,255,255,0.04);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
 }
+.modeInfoText{ font-weight: 800; opacity: 0.9; }
 
-.modeInfoText{
-  font-weight: 800;
-  opacity: 0.9;
-}
-
-/* ===== Custom dropdowns ===== */
-.dropdownWrap{
-  position: relative;
-}
-
+/* ===== dropdown ===== */
+.dropdownWrap{ position: relative; }
 .pillButton{
   display:flex;
   align-items:center;
@@ -200,7 +199,6 @@
   font-weight: 900;
   cursor: pointer;
 }
-
 .pillText{ opacity: 0.92; }
 .caret{ opacity: 0.75; }
 
@@ -216,15 +214,12 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 20px 60px rgba(0,0,0,0.55);
-  z-index: 50;
+  z-index: 60;
+  touch-action: pan-y;
 }
+.rightMenu{ left: auto; right: 0; }
 
-.menu{
-  display:flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
+.menu{ display:flex; flex-direction: column; gap: 10px; }
 .menuItem{
   display:flex;
   align-items:center;
@@ -237,117 +232,90 @@
   font-weight: 900;
   cursor: pointer;
 }
-
-.menuItem:hover{
-  border-color: rgba(255, 214, 10, 0.22);
-}
-
+.menuItem:hover{ border-color: rgba(255, 234, 102, 0.22); }
 .menuActive{
-  border-color: rgba(255, 214, 10, 0.35);
-  background: rgba(255, 214, 10, 0.08);
+  border-color: rgba(255, 234, 102, 0.35);
+  background: rgba(255, 234, 102, 0.10);
 }
+.check{ width: 18px; text-align: center; color: var(--yellow); }
 
-.check{
-  width: 18px;
-  text-align: center;
-  color: var(--yellow);
-}
-
-/* Projects menu (like screenshot 2) */
-.projectsMenu{
-  position: absolute;
-  top: calc(100% + 10px);
-  width: min(360px, calc(100vw - 48px));
-  right: 0;
-  left: auto;
-  max-width: 92vw;
-  padding: 10px;
-  border-radius: 18px;
-  background: rgba(12,12,14,0.78);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
-  z-index: 60;
-}
-
-.projectsSearch{
+/* ===== Ring ===== */
+.centerArea{
+  margin-top: 14px;
   display:flex;
-  gap: 10px;
+  flex-direction: column;
   align-items:center;
-  padding: 6px 2px 10px;
+  gap: 14px;
 }
+.ring{
+  /* ключевой фикс: размер зависит от высоты экрана => не лезет под нижнюю панель */
+  width: min(250px, 72vw, 34vh);
+  height: min(250px, 72vw, 34vh);
+  border-radius: 999px;
+  position: relative;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(0,0,0,0.35), rgba(0,0,0,0.10)),
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: inset 0 0 0 10px rgba(255,255,255,0.05);
+}
+.ring::before{
+  content:"";
+  position:absolute;
+  inset: -2px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255,234,102,0.72), rgba(255,200,0,0.35));
+  filter: blur(12px);
+  opacity: 0.35;
+  z-index: 0;
+}
+.ringActive::before{ opacity: 0.80; }
 
-.projectsInput{
-  flex: 1;
-  padding: 12px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
+.ringButton{
+  position:absolute;
+  inset: clamp(16px, 4.8vw, 22px);
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: var(--text);
-  outline: none;
-  font-weight: 800;
+  cursor: pointer;
+  display:flex;
+  flex-direction: column;
+  align-items:center;
+  justify-content:center;
+  z-index: 1;
+  touch-action: manipulation;
 }
+.ringLabel{ font-weight: 1000; letter-spacing: 2.5px; font-size: 20px; }
+.ringTime{ font-weight: 1000; font-size: clamp(32px, 10vw, 40px); letter-spacing: 1px; }
+.ringSub{ margin-top: 6px; font-size: 13px; opacity: 0.65; font-weight: 800; }
 
-.btnMini{
-  width: 42px;
-  height: 42px;
+.actionsRow{ display:flex; gap: 10px; width: 100%; justify-content: center; }
+.btnGhost{
+  padding: 12px 14px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 214, 10, 0.32);
-  background: rgba(255, 214, 10, 0.10);
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  font-weight: 950;
+  cursor: pointer;
+  min-height: 44px;
+  touch-action: manipulation;
+}
+.btnGhost:disabled{ opacity: 0.45; cursor: not-allowed; }
+
+.btnDanger{
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--dangerStroke);
+  background: var(--dangerBg);
   color: var(--text);
   font-weight: 1000;
   cursor: pointer;
-}
-
-.btnMini:disabled{
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.projectsList{
-  display:flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 56vh;
-  overflow: auto;
-  padding-right: 2px;
-}
-
-.projectsItem{
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 12px 12px;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
-}
-
-.projectsItemActive{
-  border-color: rgba(255, 214, 10, 0.30);
-  box-shadow: inset 0 0 0 1px rgba(255, 214, 10, 0.14);
-}
-
-.projectsPick{
-  border: none;
-  background: transparent;
-  color: var(--text);
-  font-weight: 950;
-  font-size: 16px;
-  cursor: pointer;
-  text-align: left;
-  flex: 1 1 auto;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.projectsActions{
-  display:flex;
-  gap: 10px;
+  min-height: 44px;
+  touch-action: manipulation;
 }
 
 .btnOutline{
@@ -359,6 +327,7 @@
   color: var(--text);
   font-weight: 900;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .btnDangerOutline{
@@ -372,136 +341,25 @@
   cursor: pointer;
   font-size: 12px;
   white-space: nowrap;
-}
-
-/* ===== Ring / center ===== */
-.centerArea{
-  margin-top: 14px;
-  display:flex;
-  flex-direction: column;
-  align-items:center;
-  gap: 14px;
-}
-
-.ring{
-  width: 250px;
-  height: 250px;
-  border-radius: 999px;
-  position: relative;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(0,0,0,0.35), rgba(0,0,0,0.10)),
-    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
-  border: 1px solid rgba(255,255,255,0.12);
-  box-shadow: inset 0 0 0 10px rgba(255,255,255,0.05);
-}
-
-.ring::before{
-  content:"";
-  position:absolute;
-  inset: -2px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255,214,10,0.65), rgba(255,184,0,0.35));
-  filter: blur(12px);
-  opacity: 0.35;
-  z-index: 0;
-}
-
-.ringActive::before{
-  opacity: 0.75;
-}
-
-.ringButton{
-  position:absolute;
-  inset: 22px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(0,0,0,0.22);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: var(--text);
-  cursor: pointer;
-  display:flex;
-  flex-direction: column;
-  align-items:center;
-  justify-content:center;
-  z-index: 1;
-}
-
-.ringLabel{
-  font-weight: 1000;
-  letter-spacing: 2.5px;
-  font-size: 20px;
-}
-
-.ringTime{
-  font-weight: 1000;
-  font-size: 40px;
-  letter-spacing: 1px;
-}
-
-.ringSub{
-  margin-top: 6px;
-  font-size: 13px;
-  opacity: 0.65;
-  font-weight: 800;
-}
-
-.actionsRow{
-  display:flex;
-  gap: 10px;
-  width: 100%;
-  justify-content: center;
-}
-
-.btnGhost{
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(255,255,255,0.05);
-  color: var(--text);
-  font-weight: 950;
-  cursor: pointer;
-  min-height: 44px;
-}
-
-.btnGhost:disabled{
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.btnDanger{
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid var(--dangerStroke);
-  background: var(--dangerBg);
-  color: var(--text);
-  font-weight: 1000;
-  cursor: pointer;
-  min-height: 44px;
+  touch-action: manipulation;
 }
 
 .muted{ margin-top: 8px; color: var(--muted); }
 
-.list{
-  margin-top: 12px;
-  display:grid;
-  gap: 10px;
-}
-
+/* list */
+.list{ margin-top: 12px; display:grid; gap: 10px; }
 .listItem{
   border: 1px solid rgba(255,255,255,0.10);
   background: rgba(255,255,255,0.04);
   border-radius: 18px;
   padding: 12px;
 }
-
 .listTop{ display:flex; justify-content: space-between; gap: 10px; }
-
 .listTitle{ font-weight: 1000; }
 .listTime{ font-size: 12px; opacity: 0.65; text-align: right; }
 .listTask{ margin-top: 8px; opacity: 0.82; }
 
-/* bottom nav */
+/* ===== bottom nav ===== */
 .bottomNav{
   position: fixed;
   left: 16px;
@@ -518,8 +376,9 @@
   background: rgba(12,12,14,0.55);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  z-index: 90;
+  touch-action: manipulation;
 }
-
 .navItem{
   border: none;
   background: transparent;
@@ -531,44 +390,148 @@
   flex-direction: column;
   align-items:center;
   gap: 6px;
+  touch-action: manipulation;
 }
-
 .navIcon{ font-size: 18px; opacity: 0.9; }
 .navLabel{ font-size: 12px; font-weight: 900; opacity: 0.85; }
-
 .navActive{
   color: rgba(255,255,255,0.95);
-  background: rgba(255, 214, 10, 0.10);
-  border: 1px solid rgba(255, 214, 10, 0.22);
+  background: rgba(255, 234, 102, 0.12);
+  border: 1px solid rgba(255, 234, 102, 0.24);
 }
 
-@media (max-width: 380px){
-  .miniStat{ min-width: 78px; }
-  .ring{ width: 230px; height: 230px; }
+/* ===== Modal overlay (Deep Work открывается всегда полностью) ===== */
+.overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgba(0,0,0,0.35);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  touch-action: none;
+}
+
+.modal{
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px - env(safe-area-inset-bottom));
+  padding: 14px;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.smallModal{ width: min(360px, calc(100vw - 32px)); }
+.modalHeader{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.modalTitle{ font-weight: 950; font-size: 18px; }
+
+.projectsSearchBlock{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+}
+.projectsInput{
+  flex: 1;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  outline: none;
+  font-weight: 800;
+  touch-action: manipulation;
+}
+.btnMini{
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 234, 102, 0.32);
+  background: rgba(255, 234, 102, 0.10);
+  color: var(--text);
+  font-weight: 1000;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.btnMini:disabled{ opacity: 0.45; cursor: not-allowed; }
+
+.projectsList{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 2px;
+}
+.modalList{
+  margin-top: 12px;
+  max-height: calc(100dvh - 260px - var(--navSpace));
+  overflow: auto;
+  touch-action: pan-y;
+}
+.projectsItem{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+}
+.projectsItemActive{
+  border-color: rgba(255, 234, 102, 0.30);
+  box-shadow: inset 0 0 0 1px rgba(255, 234, 102, 0.14);
+}
+.projectsPick{
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-weight: 950;
+  font-size: 16px;
+  cursor: pointer;
+  text-align: left;
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  touch-action: manipulation;
+}
+.projectsActions{ display:flex; gap: 10px; }
+
+/* custom time */
+.customRow{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+.customInput{
+  flex: 1;
+  padding: 14px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 950;
+  outline: none;
+  text-align: center;
+  touch-action: manipulation;
+}
+.customHint{ opacity: 0.7; font-weight: 800; }
+.customActions{
+  margin-top: 14px;
+  display:flex;
+  gap: 12px;
+  justify-content: space-between;
 }
 
 @media (max-width: 420px){
-  .taskRow{
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .taskTagClickable{
-    width: 100%;
-    text-align: center;
-  }
-
-  .projectsMenu{
-    right: 0;
-    width: calc(100vw - 48px);
-  }
-
-  .ring{
-    width: min(240px, 70vw);
-    height: min(240px, 70vw);
-  }
-
-  .ringButton{
-    inset: clamp(16px, 5vw, 22px);
-  }
+  .taskRow{ flex-direction: column; align-items: stretch; }
+  .taskTagClickable{ width: 100%; text-align: center; }
 }
