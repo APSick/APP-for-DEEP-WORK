@@ -493,51 +493,48 @@ export default function App() {
                 </button>
 
                 {timerMenuOpen && (
-                  <div className="glassMenu timeMenuSheet">
-                    <div className="menu">
-                      <button
-                        className={`menuItem ${pt.active === "stopwatch" ? "menuActive" : ""}`}
-                        onClick={() => {
-                          applyPreset("stopwatch");
-                          setTimerMenuOpen(false);
-                        }}
-                      >
-                        <span className="check">{pt.active === "stopwatch" ? "✓" : ""}</span>
-                        Секундомер
-                      </button>
+                  <div
+                    className="sheetBackdrop"
+                    onClick={() => setTimerMenuOpen(false)}
+                  >
+                    <div
+                      className="timeMenuSheet"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="timeMenuTitle">Секундомер</div>
 
-                      {[15, 25, 45, 60, 90].map((m) => (
+                      <div className="timeMenuList">
                         <button
-                          key={m}
-                          className={`menuItem ${
-                            pt.active === "countdown" && pt.countdownMin === m ? "menuActive" : ""
-                          }`}
-                          onClick={() => {
-                            applyPreset("countdown", m);
-                            setTimerMenuOpen(false);
-                          }}
+                          className={`menuItem ${pt.active === "stopwatch" ? "menuActive" : ""}`}
+                          onClick={() => { applyPreset("stopwatch"); setTimerMenuOpen(false); }}
                         >
-                          <span className="check">
-                            {pt.active === "countdown" && pt.countdownMin === m ? "✓" : ""}
-                          </span>
-                          {m} мин
+                          <span className="check">{pt.active === "stopwatch" ? "✓" : ""}</span>
+                          Секундомер
                         </button>
-                      ))}
 
-                      <button
-                        className="menuItem"
-                        onClick={() => {
-                          setCustomMin(pt.countdownMin);
-                          setCustomOpen(true);
-                          setTimerMenuOpen(false);
-                        }}
-                      >
-                        <span className="check"></span>
-                        Своё
-                      </button>
+                        {[15, 25, 45, 60, 90].map((m) => (
+                          <button
+                            key={m}
+                            className={`menuItem ${pt.active === "fixed" && pt.minutes === m ? "menuActive" : ""}`}
+                            onClick={() => { applyPreset("fixed", m); setTimerMenuOpen(false); }}
+                          >
+                            <span className="check">{pt.active === "fixed" && pt.minutes === m ? "✓" : ""}</span>
+                            {m} мин
+                          </button>
+                        ))}
+
+                        <button
+                          className={`menuItem ${pt.active === "custom" ? "menuActive" : ""}`}
+                          onClick={() => { setCustomOpen(true); setTimerMenuOpen(false); }}
+                        >
+                          <span className="check">{pt.active === "custom" ? "✓" : ""}</span>
+                          Своё
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
+
               </div>
             </div>
 
@@ -562,37 +559,9 @@ export default function App() {
               </div>
             </div>
 
-            <div className="row between" style={{ marginTop: 14 }}>
-              <div style={{ fontWeight: 950, opacity: 0.9 }}>История</div>
-              <button
-                className="btnDangerOutline"
-                onClick={() => {
-                  if (confirm("Очистить историю?")) setHistory([]);
-                }}
-              >
-                Очистить
-              </button>
-            </div>
+            
 
-            {history.length === 0 ? (
-              <div className="muted">Пока нет сессий</div>
-            ) : (
-              <div className="list">
-                {history.slice(0, 6).map((s) => (
-                  <div className="listItem" key={s.id}>
-                    <div className="listTop">
-                      <div className="listTitle">
-                        {s.projectName ?? "Deep Work"} • {Math.round(s.durationSec / 60)} мин
-                      </div>
-                      <div className="listTime">
-                        {new Date(s.endedAt).toLocaleString()}
-                      </div>
-                    </div>
-                    {s.task ? <div className="listTask">{s.task}</div> : null}
-                  </div>
-                ))}
-              </div>
-            )}
+            
           </div>
         )}
 
