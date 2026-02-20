@@ -112,15 +112,19 @@ button, input { font-family: inherit; }
 .screen{
   flex: 1 1 auto;
   min-height: 0;
-  padding: 10px 16px 18px;
+  padding: 10px 16px 140px;
   max-width: 460px;
   margin: 0 auto;
   width: 100%;
 
-  /* главное: никакого скролла/сдвига экрана */
-  overflow: hidden;
-  overscroll-behavior: none;
-  touch-action: none;
+  /* разрешить вертикальный скролл, скрыть горизонтальный */
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  touch-action: auto;
+  
+  /* гладкий скролл */
+  scroll-behavior: smooth;
 }
 
 /* Адаптация под разные устройства */
@@ -128,7 +132,7 @@ button, input { font-family: inherit; }
 @media (max-width: 389px) {
   .screen {
     max-width: 95%;
-    padding: 10px 12px 18px;
+    padding: 10px 12px 140px;
   }
 }
 
@@ -136,7 +140,7 @@ button, input { font-family: inherit; }
 @media (min-width: 390px) and (max-width: 480px) {
   .screen {
     max-width: 96%;
-    padding: 10px 14px 18px;
+    padding: 10px 14px 140px;
   }
 }
 
@@ -144,7 +148,7 @@ button, input { font-family: inherit; }
 @media (min-width: 480px) and (max-width: 600px) {
   .screen {
     max-width: 450px;
-    padding: 10px 16px 18px;
+    padding: 10px 16px 140px;
   }
 }
 
@@ -152,7 +156,7 @@ button, input { font-family: inherit; }
 @media (min-width: 600px) {
   .screen {
     max-width: 480px;
-    padding: 12px 20px 20px;
+    padding: 12px 20px 150px;
   }
 }
 
@@ -160,10 +164,35 @@ button, input { font-family: inherit; }
 @media (min-width: 900px) {
   .screen {
     max-width: 520px;
-    padding: 14px 24px 20px;
+    padding: 14px 24px 160px;
   }
 }
 
+
+
+/* Стилизация скролл-бара для .screen */
+.screen::-webkit-scrollbar {
+  width: 6px;
+}
+
+.screen::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.screen::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.screen::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Firefox */
+.screen {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  scrollbar-width: thin;
+}
 
 
 .glass{
