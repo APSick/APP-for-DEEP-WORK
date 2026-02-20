@@ -25,6 +25,7 @@ import {
 
 type Tab = "focus" | "music" | "stats" | "profile";
 type MusicSource = "all" | "fav" | "my";
+type StatsPeriod = "day" | "week" | "month" | "year" | "custom";
 
 function fmtMMSS(totalSec: number) {
   const s = Math.max(0, Math.floor(totalSec));
@@ -315,30 +316,40 @@ export default function App() {
   }
 
   // ===== stats =====
-  const todayMin = Math.round(
-    history
-      .filter((s) => {
-        const d = new Date(s.endedAt);
-        const now = new Date();
-        return (
-          d.getFullYear() === now.getFullYear() &&
-          d.getMonth() === now.getMonth() &&
-          d.getDate() === now.getDate() &&
-          s.type === "focus"
-        );
-      })
-      .reduce((acc, s) => acc + s.durationSec, 0) / 60
-  );
+  const [statsPeriod, setStatsPeriod] = useState<StatsPeriod>("week");
+  const [customStatsOpen, setCustomStatsOpen] = useState(false);
+  const [customStatsFrom, setCustomStatsFrom] = useState<number>(Date.now() - 7 * 24 * 3600 * 1000);
+  const [customStatsTo, setCustomStatsTo] = useState<number>(Date.now());
 
-  const weekMin = Math.round(
-    history
-      .filter((s) => {
-        const now = Date.now();
-        const sevenDays = 7 * 24 * 3600 * 1000;
-        return s.endedAt >= now - sevenDays && s.type === "focus";
-      })
-      .reduce((acc, s) => acc + s.durationSec, 0) / 60
-  );
+  function getFilteredStats(period: StatsPeriod): { minutes: number; sessionsCount: number } {
+    const now = Date.now();
+    let fromMs = now;
+
+    if (period === "day") {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      fromMs = d.getTime();
+    } else if (period === "week") {
+      fromMs = now - 7 * 24 * 3600 * 1000;
+    } else if (period === "month") {
+      fromMs = now - 30 * 24 * 3600 * 1000;
+    } else if (period === "year") {
+      fromMs = now - 365 * 24 * 3600 * 1000;
+    } else if (period === "custom") {
+      fromMs = customStatsFrom;
+    }
+
+    const filtered = history.filter(
+      (s) => s.type === "focus" && s.endedAt >= fromMs && s.endedAt <= (period === "custom" ? customStatsTo : now)
+    );
+
+    const minutes = Math.round(filtered.reduce((acc, s) => acc + s.durationSec, 0) / 60);
+    return { minutes, sessionsCount: filtered.length };
+  }
+
+  const todayStats = getFilteredStats("day");
+  const weekStats = getFilteredStats("week");
+  const currentStats = getFilteredStats(statsPeriod);
 
   // ===== UI helpers =====
   const timerLabel =
@@ -453,11 +464,11 @@ export default function App() {
 
                 <div className="miniStat">
                   <div className="miniStatLabel">сегодня</div>
-                  <div className="miniStatValue">{todayMin ? `${todayMin}м` : "—"}</div>
+                  <div className="miniStatValue">{todayStats.minutes ? `${todayStats.minutes}м` : "—"}</div>
                 </div>
                 <div className="miniStat">
                   <div className="miniStatLabel">за неделю</div>
-                  <div className="miniStatValue">{weekMin ? `${weekMin}м` : "—"}</div>
+                  <div className="miniStatValue">{weekStats.minutes ? `${weekStats.minutes}м` : "—"}</div>
                 </div>
               </div>
             </div>
@@ -515,19 +526,19 @@ export default function App() {
                         {[15, 25, 45, 60, 90].map((m) => (
                           <button
                             key={m}
-                            className={`menuItem ${pt.active === "fixed" && pt.minutes === m ? "menuActive" : ""}`}
-                            onClick={() => { applyPreset("fixed", m); setTimerMenuOpen(false); }}
+                            className={`menuItem ${pt.active === "countdown" && pt.countdownMin === m ? "menuActive" : ""}`}
+                            onClick={() => { applyPreset("countdown", m); setTimerMenuOpen(false); }}
                           >
-                            <span className="check">{pt.active === "fixed" && pt.minutes === m ? "✓" : ""}</span>
+                            <span className="check">{pt.active === "countdown" && pt.countdownMin === m ? "✓" : ""}</span>
                             {m} мин
                           </button>
                         ))}
 
                         <button
-                          className={`menuItem ${pt.active === "custom" ? "menuActive" : ""}`}
+                          className={`menuItem ${customOpen ? "menuActive" : ""}`}
                           onClick={() => { setCustomOpen(true); setTimerMenuOpen(false); }}
                         >
-                          <span className="check">{pt.active === "custom" ? "✓" : ""}</span>
+                          <span className="check">{customOpen ? "✓" : ""}</span>
                           Своё
                         </button>
                       </div>
@@ -573,7 +584,7 @@ export default function App() {
         )}
 
         {tab === "stats" && (
-          <div className="glass card">
+          <div className="glass card focusCard">
             <div className="row between">
               <div className="cardTitle">Статистика</div>
               <button
@@ -585,10 +596,135 @@ export default function App() {
                 Очистить
               </button>
             </div>
-            <div className="muted" style={{ marginTop: 8 }}>
-              Сегодня: {todayMin ? `${todayMin} мин` : "—"} • За неделю:{" "}
-              {weekMin ? `${weekMin} мин` : "—"}
+
+            <div style={{ marginTop: 16, marginBottom: 16 }}>
+              <div className="dropdownWrap">
+                <button className="pillButton" onClick={() => setCustomStatsOpen((v) => !v)}>
+                  <span className="pillText">
+                    {statsPeriod === "day"
+                      ? "1 день"
+                      : statsPeriod === "week"
+                      ? "1 неделя"
+                      : statsPeriod === "month"
+                      ? "1 месяц"
+                      : statsPeriod === "year"
+                      ? "1 год"
+                      : "Произвольный период"}
+                  </span>
+                  <span className="caret">▼</span>
+                </button>
+
+                {customStatsOpen && (
+                  <div className="glassMenu">
+                    <div className="menu">
+                      <button
+                        className={`menuItem ${statsPeriod === "day" ? "menuActive" : ""}`}
+                        onClick={() => {
+                          setStatsPeriod("day");
+                          setCustomStatsOpen(false);
+                        }}
+                      >
+                        <span className="check">{statsPeriod === "day" ? "✓" : ""}</span>
+                        1 день
+                      </button>
+                      <button
+                        className={`menuItem ${statsPeriod === "week" ? "menuActive" : ""}`}
+                        onClick={() => {
+                          setStatsPeriod("week");
+                          setCustomStatsOpen(false);
+                        }}
+                      >
+                        <span className="check">{statsPeriod === "week" ? "✓" : ""}</span>
+                        1 неделя
+                      </button>
+                      <button
+                        className={`menuItem ${statsPeriod === "month" ? "menuActive" : ""}`}
+                        onClick={() => {
+                          setStatsPeriod("month");
+                          setCustomStatsOpen(false);
+                        }}
+                      >
+                        <span className="check">{statsPeriod === "month" ? "✓" : ""}</span>
+                        1 месяц
+                      </button>
+                      <button
+                        className={`menuItem ${statsPeriod === "year" ? "menuActive" : ""}`}
+                        onClick={() => {
+                          setStatsPeriod("year");
+                          setCustomStatsOpen(false);
+                        }}
+                      >
+                        <span className="check">{statsPeriod === "year" ? "✓" : ""}</span>
+                        1 год
+                      </button>
+                      <button
+                        className={`menuItem ${statsPeriod === "custom" ? "menuActive" : ""}`}
+                        onClick={() => {
+                          setStatsPeriod("custom");
+                          setCustomStatsOpen(false);
+                        }}
+                      >
+                        <span className="check">{statsPeriod === "custom" ? "✓" : ""}</span>
+                        Произвольный
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
+
+            <div className="muted" style={{ marginTop: 8, marginBottom: 16 }}>
+              Всего: {currentStats.minutes ? `${currentStats.minutes} мин` : "—"} •{" "}
+              {currentStats.sessionsCount} сеанс{currentStats.sessionsCount === 1 ? "" : "ов"}
+            </div>
+
+            {statsPeriod === "custom" && (
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginBottom: 8 }}>Выбрать период</div>
+                <div className="customRow">
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, marginBottom: 4 }}>От</div>
+                    <input
+                      type="date"
+                      value={new Date(customStatsFrom).toISOString().split("T")[0]}
+                      onChange={(e) => {
+                        const d = new Date(e.target.value);
+                        d.setHours(0, 0, 0, 0);
+                        setCustomStatsFrom(d.getTime());
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "8px",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(255,255,255,0.2)",
+                        backgroundColor: "rgba(255,255,255,0.05)",
+                        color: "white",
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1, marginLeft: 8 }}>
+                    <div style={{ fontSize: 12, marginBottom: 4 }}>До</div>
+                    <input
+                      type="date"
+                      value={new Date(customStatsTo).toISOString().split("T")[0]}
+                      onChange={(e) => {
+                        const d = new Date(e.target.value);
+                        d.setHours(23, 59, 59, 999);
+                        setCustomStatsTo(d.getTime());
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "8px",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(255,255,255,0.2)",
+                        backgroundColor: "rgba(255,255,255,0.05)",
+                        color: "white",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
