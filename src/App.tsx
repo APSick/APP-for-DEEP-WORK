@@ -151,6 +151,7 @@ export default function App() {
           <StatsCard
             statsPeriod={stats.statsPeriod}
             currentStats={stats.currentStats}
+            chartData={stats.chartData}
             customStatsFrom={stats.customStatsFrom}
             customStatsTo={stats.customStatsTo}
             onPeriodChange={stats.setStatsPeriod}

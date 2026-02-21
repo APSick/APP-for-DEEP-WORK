@@ -3,10 +3,12 @@ import { useState } from "react";
 import { TEXTS } from "../constants";
 import { ConfirmDialog } from "./ConfirmDialog";
 import type { StatsPeriod } from "../hooks/useStats";
+import type { ChartBar } from "../hooks/useStats";
 
 interface StatsCardProps {
   statsPeriod: StatsPeriod;
   currentStats: { minutes: number; sessionsCount: number };
+  chartData: ChartBar[];
   customStatsFrom: number;
   customStatsTo: number;
   onPeriodChange: (period: StatsPeriod) => void;
@@ -15,9 +17,12 @@ interface StatsCardProps {
   onClearHistory: () => void;
 }
 
+const SHOW_CHART_PERIODS: StatsPeriod[] = ["week", "month", "year", "custom"];
+
 export function StatsCard({
   statsPeriod,
   currentStats,
+  chartData,
   customStatsFrom,
   customStatsTo,
   onPeriodChange,
@@ -122,6 +127,32 @@ export function StatsCard({
           {TEXTS.statsTotal}: {currentStats.minutes ? `${currentStats.minutes} ${TEXTS.minutes}` : "—"} •{" "}
           {currentStats.sessionsCount} {sessionsLabel}
         </div>
+
+        {SHOW_CHART_PERIODS.includes(statsPeriod) && chartData.length > 0 && (() => {
+          const maxMinutes = Math.max(1, ...chartData.map((b) => b.minutes));
+          return (
+            <div className="statsChartWrap">
+              <div
+                className="statsChart"
+                role="img"
+                aria-label={`График по ${statsPeriod === "week" ? "дням недели" : statsPeriod === "month" ? "дням месяца" : "месяцам"}`}
+              >
+                {chartData.map((bar, i) => (
+                  <div key={i} className="statsChartBarCell">
+                    <div
+                      className="statsChartBar"
+                      style={{
+                        height: `${(bar.minutes / maxMinutes) * 100}%`,
+                      }}
+                      title={`${bar.label}: ${bar.minutes} ${TEXTS.minutes}`}
+                    />
+                    <span className="statsChartLabel">{bar.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {statsPeriod === "custom" && (
           <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
