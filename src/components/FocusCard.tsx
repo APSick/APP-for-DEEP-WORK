@@ -58,55 +58,14 @@ export function FocusCard({
           <div className="cardTitle">{TEXTS.focus}</div>
 
           <div className="row gap12 headerStatsRow">
-            <div className="dropdownWrap">
-              <button className="pillButton" onClick={() => setMusicMenuOpen((v) => !v)}>
-                <span className="pillText">
-                  {musicSource === "fav"
-                    ? TEXTS.musicFav
-                    : musicSource === "all"
-                    ? TEXTS.musicAll
-                    : TEXTS.musicMy}
-                </span>
-                <span className="caret">▼</span>
-              </button>
-
-              {musicMenuOpen && (
-                <div className="glassMenu">
-                  <div className="menu">
-                    <button
-                      className={`menuItem ${musicSource === "all" ? "menuActive" : ""}`}
-                      onClick={() => {
-                        onMusicSourceChange("all");
-                        setMusicMenuOpen(false);
-                      }}
-                    >
-                      <span className="check">{musicSource === "all" ? "✓" : ""}</span>
-                      {TEXTS.musicAll}
-                    </button>
-                    <button
-                      className={`menuItem ${musicSource === "fav" ? "menuActive" : ""}`}
-                      onClick={() => {
-                        onMusicSourceChange("fav");
-                        setMusicMenuOpen(false);
-                      }}
-                    >
-                      <span className="check">{musicSource === "fav" ? "✓" : ""}</span>
-                      {TEXTS.musicFav}
-                    </button>
-                    <button
-                      className={`menuItem ${musicSource === "my" ? "menuActive" : ""}`}
-                      onClick={() => {
-                        onMusicSourceChange("my");
-                        setMusicMenuOpen(false);
-                      }}
-                    >
-                      <span className="check">{musicSource === "my" ? "✓" : ""}</span>
-                      {TEXTS.musicMy}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            <button className="taskTag taskTagClickable" onClick={() => setMusicMenuOpen((v) => !v)}>
+              {musicSource === "fav"
+                ? TEXTS.musicFav
+                : musicSource === "all"
+                ? TEXTS.musicAll
+                : TEXTS.musicMy}{" "}
+              ▼
+            </button>
 
             <div className="miniStatsGroup">
               <div className="miniStat">
@@ -139,58 +98,9 @@ export function FocusCard({
             <span className="modeInfoText">{phase === "focus" ? TEXTS.focusMode : TEXTS.break}</span>
           </button>
 
-          <div className="dropdownWrap" style={{ marginLeft: "auto" }}>
-            <button className="pillButton" onClick={() => setTimerMenuOpen((v) => !v)}>
-              <span className="pillText">{timerLabel}</span>
-              <span className="caret">▼</span>
-            </button>
-
-            {timerMenuOpen && (
-              <div className="sheetBackdrop" onClick={() => setTimerMenuOpen(false)}>
-                <div className="timeMenuSheet" onClick={(e) => e.stopPropagation()}>
-                  <div className="timeMenuTitle">{TEXTS.stopwatch}</div>
-
-                  <div className="timeMenuList">
-                    <button
-                      className={`menuItem ${pt.active === "stopwatch" ? "menuActive" : ""}`}
-                      onClick={() => {
-                        onApplyPreset("stopwatch");
-                        setTimerMenuOpen(false);
-                      }}
-                    >
-                      <span className="check">{pt.active === "stopwatch" ? "✓" : ""}</span>
-                      {TEXTS.stopwatch}
-                    </button>
-
-                    {[15, 25, 45, 60, 90].map((m) => (
-                      <button
-                        key={m}
-                        className={`menuItem ${pt.active === "countdown" && pt.countdownMin === m ? "menuActive" : ""}`}
-                        onClick={() => {
-                          onApplyPreset("countdown", m);
-                          setTimerMenuOpen(false);
-                        }}
-                      >
-                        <span className="check">{pt.active === "countdown" && pt.countdownMin === m ? "✓" : ""}</span>
-                        {m} {TEXTS.minutes}
-                      </button>
-                    ))}
-
-                    <button
-                      className={`menuItem ${customOpen ? "menuActive" : ""}`}
-                      onClick={() => {
-                        setCustomOpen(true);
-                        setTimerMenuOpen(false);
-                      }}
-                    >
-                      <span className="check">{customOpen ? "✓" : ""}</span>
-                      {TEXTS.custom}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <button className="taskTag taskTagClickable" style={{ marginLeft: "auto" }} onClick={() => setTimerMenuOpen((v) => !v)}>
+            {timerLabel} ▼
+          </button>
         </div>
 
         <div className="centerArea">
@@ -223,6 +133,98 @@ export function FocusCard({
           }}
           onClose={() => setCustomOpen(false)}
         />
+      )}
+
+      {/* Модалка «Музыка» в стиле Deep Work */}
+      {musicMenuOpen && (
+        <div className="overlay" onClick={() => setMusicMenuOpen(false)}>
+          <div className="glass modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modalHeader">
+              <div className="modalTitle">{TEXTS.music}</div>
+              <button className="btnOutline" onClick={() => setMusicMenuOpen(false)}>
+                {TEXTS.close}
+              </button>
+            </div>
+            <div className="projectsList">
+              {([
+                { value: "all" as MusicSource, label: TEXTS.musicAll },
+                { value: "fav" as MusicSource, label: TEXTS.musicFav },
+                { value: "my" as MusicSource,  label: TEXTS.musicMy },
+              ] as const).map(({ value, label }) => (
+                <div
+                  key={value}
+                  className={`projectsItem ${musicSource === value ? "projectsItemActive" : ""}`}
+                >
+                  <button
+                    className="projectsPick"
+                    onClick={() => {
+                      onMusicSourceChange(value);
+                      setMusicMenuOpen(false);
+                    }}
+                  >
+                    {label}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка «Таймер» в стиле Deep Work */}
+      {timerMenuOpen && (
+        <div className="overlay" onClick={() => setTimerMenuOpen(false)}>
+          <div className="glass modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modalHeader">
+              <div className="modalTitle">Режим таймера</div>
+              <button className="btnOutline" onClick={() => setTimerMenuOpen(false)}>
+                {TEXTS.close}
+              </button>
+            </div>
+            <div className="projectsList">
+              <div className={`projectsItem ${pt.active === "stopwatch" ? "projectsItemActive" : ""}`}>
+                <button
+                  className="projectsPick"
+                  onClick={() => {
+                    onApplyPreset("stopwatch");
+                    setTimerMenuOpen(false);
+                  }}
+                >
+                  {TEXTS.stopwatch}
+                </button>
+              </div>
+
+              {[15, 25, 45, 60, 90].map((m) => (
+                <div
+                  key={m}
+                  className={`projectsItem ${pt.active === "countdown" && pt.countdownMin === m ? "projectsItemActive" : ""}`}
+                >
+                  <button
+                    className="projectsPick"
+                    onClick={() => {
+                      onApplyPreset("countdown", m);
+                      setTimerMenuOpen(false);
+                    }}
+                  >
+                    {m} {TEXTS.minutes}
+                  </button>
+                </div>
+              ))}
+
+              <div className={`projectsItem ${pt.active === "countdown" && ![15,25,45,60,90].includes(pt.countdownMin) ? "projectsItemActive" : ""}`}>
+                <button
+                  className="projectsPick"
+                  onClick={() => {
+                    setCustomOpen(true);
+                    setTimerMenuOpen(false);
+                  }}
+                >
+                  {TEXTS.custom}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );
