@@ -57,7 +57,7 @@ export function FocusCard({
         <div className="cardHeader">
           <div className="cardTitle">{TEXTS.focus}</div>
 
-          <div className="row gap12">
+          <div className="row gap12 headerStatsRow">
             <div className="dropdownWrap">
               <button className="pillButton" onClick={() => setMusicMenuOpen((v) => !v)}>
                 <span className="pillText">
