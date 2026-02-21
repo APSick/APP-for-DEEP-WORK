@@ -106,9 +106,26 @@ export function uid(): string {
   return `${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
 }
 
+function isValidSession(x: unknown): x is Session {
+  if (!x || typeof x !== "object") return false;
+  const o = x as Record<string, unknown>;
+  return (
+    typeof o.id === "string" &&
+    (o.type === "focus" || o.type === "break") &&
+    typeof o.startedAt === "number" &&
+    Number.isFinite(o.startedAt) &&
+    typeof o.endedAt === "number" &&
+    Number.isFinite(o.endedAt) &&
+    typeof o.durationSec === "number" &&
+    Number.isFinite(o.durationSec) &&
+    o.durationSec >= 0
+  );
+}
+
 export function loadHistory(): Session[] {
-  const v = safeJsonParse<Session[]>(safeGetItem(KEY_HISTORY));
-  return Array.isArray(v) ? v : [];
+  const v = safeJsonParse<unknown>(safeGetItem(KEY_HISTORY));
+  if (!Array.isArray(v)) return [];
+  return v.filter(isValidSession);
 }
 
 export function saveHistory(items: Session[]) {
@@ -123,9 +140,17 @@ export function saveTask(task: string) {
   safeSetItem(KEY_TASK, task ?? "");
 }
 
+function isValidProject(x: unknown): x is Project {
+  if (!x || typeof x !== "object") return false;
+  const o = x as Record<string, unknown>;
+  return typeof o.id === "string" && typeof o.name === "string";
+}
+
 export function loadProjects(): Project[] {
-  const v = safeJsonParse<Project[]>(safeGetItem(KEY_PROJECTS));
-  if (Array.isArray(v) && v.length) return v;
+  const v = safeJsonParse<unknown>(safeGetItem(KEY_PROJECTS));
+  if (!Array.isArray(v)) return [];
+  const filtered = v.filter(isValidProject);
+  if (filtered.length > 0) return filtered;
 
   // дефолтный набор как на твоих скринах
   const def: Project[] = [

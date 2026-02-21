@@ -1,5 +1,5 @@
 // src/App.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { getTg } from "./telegram";
 import { loadHistory, loadTask, saveHistory, saveTask, uid, type Session } from "./storage";
@@ -57,24 +57,11 @@ export default function App() {
   const timer = useTimer();
   const { phase, pt, displaySec, isRunning, nowMs, timers, pauseAll, resetCurrent } = timer;
 
-  // Авто-завершение countdown
-  useEffect(() => {
-    if (phase !== "focus" && phase !== "break") return;
-    const cur = timers[phase];
-    if (cur.active !== "countdown") return;
-    if (!cur.countdown.running) return;
-    const rem = calcCountdownRemaining(cur.countdown, nowMs);
-    if (rem > 0) return;
-
-    handleFinishSession();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nowMs]);
-
   // ===== Stats =====
   const stats = useStats(history);
 
   // ===== Finish session handler =====
-  function handleFinishSession() {
+  const handleFinishSession = useCallback(() => {
     const t = Date.now();
     const cur = timers[phase];
     const durSec =
@@ -103,7 +90,28 @@ export default function App() {
 
     setHistory((h) => [s, ...h].slice(0, 2000));
     setTimeout(() => resetCurrent(), 0);
-  }
+  }, [
+    phase,
+    timers,
+    timer.displaySec,
+    task,
+    projects,
+    activeProjectId,
+    pauseAll,
+    resetCurrent,
+  ]);
+
+  // Авто-завершение countdown
+  useEffect(() => {
+    if (phase !== "focus" && phase !== "break") return;
+    const cur = timers[phase];
+    if (cur.active !== "countdown") return;
+    if (!cur.countdown.running) return;
+    const rem = calcCountdownRemaining(cur.countdown, nowMs);
+    if (rem > 0) return;
+
+    handleFinishSession();
+  }, [nowMs, phase, timers, handleFinishSession]);
 
   return (
     <div className="appRoot">

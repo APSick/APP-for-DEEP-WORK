@@ -19,15 +19,6 @@ export function useTimer() {
     return { focus: defaultPhaseTimer(45, "stopwatch"), break: defaultPhaseTimer(15, "countdown") };
   });
 
-  // Восстановление состояния при старте
-  useEffect(() => {
-    const snap = loadTimeMode();
-    if (snap?.v === 2) {
-      setPhase(snap.phase);
-      setTimers({ focus: snap.focus, break: snap.break });
-    }
-  }, []);
-
   // Сохранение в localStorage
   useEffect(() => {
     const snap: TimeModeSnapshotV2 = { v: 2, phase, focus: timers.focus, break: timers.break };

@@ -1,10 +1,11 @@
 // src/components/TopBar.tsx
+import { useMemo } from "react";
 import { getTg } from "../telegram";
 import { TEXTS } from "../constants";
 
 export function TopBar() {
-  const tg = getTg();
-  const username = tg?.initDataUnsafe?.user?.username || TEXTS.defaultUsername;
+  const tg = useMemo(() => getTg(), []);
+  const username = tg?.initDataUnsafe?.user?.username ?? TEXTS.defaultUsername;
 
   return (
     <div className="topBar">

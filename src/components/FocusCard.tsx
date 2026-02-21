@@ -134,6 +134,102 @@ export function FocusCard({
         </div>
       </div>
 
+      {/* Модалка: источник музыки (Избранное и т.д.) */}
+      {musicModalOpen && (
+        <div className="overlay" onClick={() => setMusicModalOpen(false)}>
+          <div className="glass modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modalHeader">
+              <div className="modalTitle">{TEXTS.music}</div>
+              <button className="btnOutline" onClick={() => setMusicModalOpen(false)}>
+                {TEXTS.close}
+              </button>
+            </div>
+            <div className="projectsList modalList">
+              {(
+                [
+                  { value: "all" as const, label: TEXTS.musicAll },
+                  { value: "fav" as const, label: TEXTS.musicFav },
+                  { value: "my" as const, label: TEXTS.musicMy },
+                ] as const
+              ).map(({ value, label }) => (
+                <div
+                  key={value}
+                  className={`projectsItem ${musicSource === value ? "projectsItemActive" : ""}`}
+                >
+                  <button
+                    className="projectsPick"
+                    onClick={() => {
+                      onMusicSourceChange(value);
+                      setMusicModalOpen(false);
+                    }}
+                  >
+                    {label}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка: режим таймера (Секундомер / минуты) */}
+      {timerModalOpen && (
+        <div className="overlay" onClick={() => setTimerModalOpen(false)}>
+          <div className="glass modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modalHeader">
+              <div className="modalTitle">{TEXTS.stopwatch}</div>
+              <button className="btnOutline" onClick={() => setTimerModalOpen(false)}>
+                {TEXTS.close}
+              </button>
+            </div>
+            <div className="projectsList modalList">
+              <div
+                className={`projectsItem ${pt.active === "stopwatch" ? "projectsItemActive" : ""}`}
+              >
+                <button
+                  className="projectsPick"
+                  onClick={() => {
+                    onApplyPreset("stopwatch");
+                    setTimerModalOpen(false);
+                  }}
+                >
+                  {TEXTS.stopwatch}
+                </button>
+              </div>
+              {COUNTDOWN_PRESETS.map((m) => (
+                <div
+                  key={m}
+                  className={`projectsItem ${pt.active === "countdown" && pt.countdownMin === m ? "projectsItemActive" : ""}`}
+                >
+                  <button
+                    className="projectsPick"
+                    onClick={() => {
+                      onApplyPreset("countdown", m);
+                      setTimerModalOpen(false);
+                    }}
+                  >
+                    {m} {TEXTS.minutes}
+                  </button>
+                </div>
+              ))}
+              <div
+                className={`projectsItem ${customOpen || isCustomCountdown ? "projectsItemActive" : ""}`}
+              >
+                <button
+                  className="projectsPick"
+                  onClick={() => {
+                    setTimerModalOpen(false);
+                    setCustomOpen(true);
+                  }}
+                >
+                  {TEXTS.custom}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {customOpen && (
         <CustomTimeModal
           isOpen={customOpen}

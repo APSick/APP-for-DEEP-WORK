@@ -179,6 +179,7 @@ export function StatsCard({
           isOpen={showClearConfirm}
           title={TEXTS.statsClear}
           message={TEXTS.statsClearConfirm}
+          confirmLabel={TEXTS.statsClear}
           onConfirm={() => {
             onClearHistory();
             setShowClearConfirm(false);

@@ -82,6 +82,6 @@ export const TEXTS = {
     other: "Другое",
   },
   
-  // Дефолтный username
-  defaultUsername: "Manager_arseniy2412",
+  // Дефолтный username (если не из Telegram)
+  defaultUsername: "Гость",
 } as const;

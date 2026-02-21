@@ -1,5 +1,5 @@
 // src/hooks/useStats.ts
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { Session } from "../storage";
 
 export type StatsPeriod = "day" | "week" | "month" | "year" | "custom";
@@ -9,35 +9,63 @@ export function useStats(history: Session[]) {
   const [customStatsFrom, setCustomStatsFrom] = useState<number>(Date.now() - 7 * 24 * 3600 * 1000);
   const [customStatsTo, setCustomStatsTo] = useState<number>(Date.now());
 
-  function getFilteredStats(period: StatsPeriod): { minutes: number; sessionsCount: number } {
+  const { todayStats, weekStats, currentStats } = useMemo(() => {
     const now = Date.now();
-    let fromMs = now;
+    const dayStart = new Date();
+    dayStart.setHours(0, 0, 0, 0);
+    const fromDay = dayStart.getTime();
+    const fromWeek = now - 7 * 24 * 3600 * 1000;
+    const fromMonth = now - 30 * 24 * 3600 * 1000;
+    const fromYear = now - 365 * 24 * 3600 * 1000;
 
-    if (period === "day") {
-      const d = new Date();
-      d.setHours(0, 0, 0, 0);
-      fromMs = d.getTime();
-    } else if (period === "week") {
-      fromMs = now - 7 * 24 * 3600 * 1000;
-    } else if (period === "month") {
-      fromMs = now - 30 * 24 * 3600 * 1000;
-    } else if (period === "year") {
-      fromMs = now - 365 * 24 * 3600 * 1000;
-    } else if (period === "custom") {
-      fromMs = customStatsFrom;
+    let dayMinutes = 0;
+    let dayCount = 0;
+    let weekMinutes = 0;
+    let weekCount = 0;
+    let periodMinutes = 0;
+    let periodCount = 0;
+
+    const fromCustom = customStatsFrom;
+    const toCustom = customStatsTo;
+    const fromByPeriod =
+      statsPeriod === "day"
+        ? fromDay
+        : statsPeriod === "week"
+          ? fromWeek
+          : statsPeriod === "month"
+            ? fromMonth
+            : statsPeriod === "year"
+              ? fromYear
+              : fromCustom;
+    const toByPeriod = statsPeriod === "custom" ? toCustom : now;
+
+    for (const s of history) {
+      if (s.type !== "focus") continue;
+      const sec = s.durationSec;
+      const end = s.endedAt;
+      if (end >= fromDay && end <= now) {
+        dayMinutes += sec;
+        dayCount += 1;
+      }
+      if (end >= fromWeek && end <= now) {
+        weekMinutes += sec;
+        weekCount += 1;
+      }
+      if (end >= fromByPeriod && end <= toByPeriod) {
+        periodMinutes += sec;
+        periodCount += 1;
+      }
     }
 
-    const filtered = history.filter(
-      (s) => s.type === "focus" && s.endedAt >= fromMs && s.endedAt <= (period === "custom" ? customStatsTo : now)
-    );
-
-    const minutes = Math.round(filtered.reduce((acc, s) => acc + s.durationSec, 0) / 60);
-    return { minutes, sessionsCount: filtered.length };
-  }
-
-  const todayStats = getFilteredStats("day");
-  const weekStats = getFilteredStats("week");
-  const currentStats = getFilteredStats(statsPeriod);
+    return {
+      todayStats: { minutes: Math.round(dayMinutes / 60), sessionsCount: dayCount },
+      weekStats: { minutes: Math.round(weekMinutes / 60), sessionsCount: weekCount },
+      currentStats: {
+        minutes: Math.round(periodMinutes / 60),
+        sessionsCount: periodCount,
+      },
+    };
+  }, [history, statsPeriod, customStatsFrom, customStatsTo]);
 
   return {
     statsPeriod,

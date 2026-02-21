@@ -1,15 +1,33 @@
 // src/components/ConfirmDialog.tsx
+import { useEffect } from "react";
 import { TEXTS } from "../constants";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
   title: string;
   message: string;
+  confirmLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }
 
-export function ConfirmDialog({ isOpen, title, message, onConfirm, onCancel }: ConfirmDialogProps) {
+export function ConfirmDialog({
+  isOpen,
+  title,
+  message,
+  confirmLabel = TEXTS.delete,
+  onConfirm,
+  onCancel,
+}: ConfirmDialogProps) {
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, onCancel]);
+
   if (!isOpen) return null;
 
   return (
@@ -26,7 +44,7 @@ export function ConfirmDialog({ isOpen, title, message, onConfirm, onCancel }: C
             {TEXTS.cancel}
           </button>
           <button className="btnDanger" onClick={onConfirm}>
-            {TEXTS.delete}
+            {confirmLabel}
           </button>
         </div>
       </div>

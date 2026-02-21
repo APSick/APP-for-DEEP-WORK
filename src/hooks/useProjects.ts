@@ -34,11 +34,13 @@ export function useProjects() {
   }
 
   function deleteProject(id: string) {
-    setProjects((prev) => prev.filter((x) => x.id !== id));
-    if (activeProjectId === id) {
-      const next = projects.filter((x) => x.id !== id)[0];
-      setActiveProjectId(next?.id ?? "");
-    }
+    const isDeletingActive = activeProjectId === id;
+    setProjects((prev) => {
+      const next = prev.filter((x) => x.id !== id);
+      const list = next.length === 0 ? loadProjects() : next;
+      if (isDeletingActive) setActiveProjectId(list[0]?.id ?? "");
+      return list;
+    });
   }
 
   return {
