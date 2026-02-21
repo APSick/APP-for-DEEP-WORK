@@ -108,13 +108,15 @@ export function FocusCard({
               )}
             </div>
 
-            <div className="miniStat">
-              <div className="miniStatLabel">{TEXTS.statsToday}</div>
-              <div className="miniStatValue">{todayStats.minutes ? `${todayStats.minutes}м` : "—"}</div>
-            </div>
-            <div className="miniStat">
-              <div className="miniStatLabel">{TEXTS.statsWeek}</div>
-              <div className="miniStatValue">{weekStats.minutes ? `${weekStats.minutes}м` : "—"}</div>
+            <div className="miniStatsGroup">
+              <div className="miniStat">
+                <div className="miniStatLabel">{TEXTS.statsToday}</div>
+                <div className="miniStatValue">{todayStats.minutes ? `${todayStats.minutes}м` : "—"}</div>
+              </div>
+              <div className="miniStat">
+                <div className="miniStatLabel">{TEXTS.statsWeek}</div>
+                <div className="miniStatValue">{weekStats.minutes ? `${weekStats.minutes}м` : "—"}</div>
+              </div>
             </div>
           </div>
         </div>

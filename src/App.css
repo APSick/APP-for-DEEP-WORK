@@ -176,6 +176,13 @@
 .between{ justify-content: space-between; }
 .gap12{ gap: 12px; }
 
+.miniStatsGroup{
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-left: auto;
+}
+
 .miniStat{
   min-width: 71px;
   text-align: center;
