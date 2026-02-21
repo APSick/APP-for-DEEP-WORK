@@ -6,6 +6,8 @@ import { CustomTimeModal } from "./CustomTimeModal";
 import type { Phase, PhaseTimer } from "../storage";
 import type { MusicSource } from "../App";
 
+const COUNTDOWN_PRESETS = [15, 25, 45, 60, 90] as const;
+
 interface FocusCardProps {
   phase: Phase;
   pt: PhaseTimer;
@@ -45,11 +47,13 @@ export function FocusCard({
   onOpenProjects,
   onMusicSourceChange,
 }: FocusCardProps) {
-  const [musicMenuOpen, setMusicMenuOpen] = useState(false);
-  const [timerMenuOpen, setTimerMenuOpen] = useState(false);
+  const [musicModalOpen, setMusicModalOpen] = useState(false);
+  const [timerModalOpen, setTimerModalOpen] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
 
   const timerLabel = pt.active === "stopwatch" ? TEXTS.stopwatch : `${pt.countdownMin} ${TEXTS.minutes}`;
+  const isCustomCountdown =
+    pt.active === "countdown" && !COUNTDOWN_PRESETS.includes(pt.countdownMin as (typeof COUNTDOWN_PRESETS)[number]);
 
   return (
     <>
@@ -58,12 +62,15 @@ export function FocusCard({
           <div className="cardTitle">{TEXTS.focus}</div>
 
           <div className="row gap12 headerStatsRow">
-            <button className="taskTag taskTagClickable" onClick={() => setMusicMenuOpen((v) => !v)}>
+            <button
+              className="taskTag taskTagClickable"
+              onClick={() => setMusicModalOpen(true)}
+            >
               {musicSource === "fav"
                 ? TEXTS.musicFav
                 : musicSource === "all"
-                ? TEXTS.musicAll
-                : TEXTS.musicMy}{" "}
+                  ? TEXTS.musicAll
+                  : TEXTS.musicMy}{" "}
               ▼
             </button>
 
@@ -98,7 +105,11 @@ export function FocusCard({
             <span className="modeInfoText">{phase === "focus" ? TEXTS.focusMode : TEXTS.break}</span>
           </button>
 
-          <button className="taskTag taskTagClickable" style={{ marginLeft: "auto" }} onClick={() => setTimerMenuOpen((v) => !v)}>
+          <button
+            className="taskTag taskTagClickable"
+            style={{ marginLeft: "auto" }}
+            onClick={() => setTimerModalOpen(true)}
+          >
             {timerLabel} ▼
           </button>
         </div>
@@ -135,22 +146,24 @@ export function FocusCard({
         />
       )}
 
-      {/* Модалка «Музыка» в стиле Deep Work */}
-      {musicMenuOpen && (
-        <div className="overlay" onClick={() => setMusicMenuOpen(false)}>
+      {/* Модалка: источник музыки */}
+      {musicModalOpen && (
+        <div className="overlay" onClick={() => setMusicModalOpen(false)}>
           <div className="glass modal" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
               <div className="modalTitle">{TEXTS.music}</div>
-              <button className="btnOutline" onClick={() => setMusicMenuOpen(false)}>
+              <button className="btnOutline" onClick={() => setMusicModalOpen(false)}>
                 {TEXTS.close}
               </button>
             </div>
-            <div className="projectsList">
-              {([
-                { value: "all" as MusicSource, label: TEXTS.musicAll },
-                { value: "fav" as MusicSource, label: TEXTS.musicFav },
-                { value: "my" as MusicSource,  label: TEXTS.musicMy },
-              ] as const).map(({ value, label }) => (
+            <div className="projectsList modalList">
+              {(
+                [
+                  { value: "all" as const, label: TEXTS.musicAll },
+                  { value: "fav" as const, label: TEXTS.musicFav },
+                  { value: "my" as const, label: TEXTS.musicMy },
+                ] as const
+              ).map(({ value, label }) => (
                 <div
                   key={value}
                   className={`projectsItem ${musicSource === value ? "projectsItemActive" : ""}`}
@@ -159,7 +172,7 @@ export function FocusCard({
                     className="projectsPick"
                     onClick={() => {
                       onMusicSourceChange(value);
-                      setMusicMenuOpen(false);
+                      setMusicModalOpen(false);
                     }}
                   >
                     {label}
@@ -171,30 +184,31 @@ export function FocusCard({
         </div>
       )}
 
-      {/* Модалка «Таймер» в стиле Deep Work */}
-      {timerMenuOpen && (
-        <div className="overlay" onClick={() => setTimerMenuOpen(false)}>
+      {/* Модалка: режим таймера (Секундомер / минуты) */}
+      {timerModalOpen && (
+        <div className="overlay" onClick={() => setTimerModalOpen(false)}>
           <div className="glass modal" onClick={(e) => e.stopPropagation()}>
             <div className="modalHeader">
-              <div className="modalTitle">Режим таймера</div>
-              <button className="btnOutline" onClick={() => setTimerMenuOpen(false)}>
+              <div className="modalTitle">{TEXTS.stopwatch}</div>
+              <button className="btnOutline" onClick={() => setTimerModalOpen(false)}>
                 {TEXTS.close}
               </button>
             </div>
-            <div className="projectsList">
-              <div className={`projectsItem ${pt.active === "stopwatch" ? "projectsItemActive" : ""}`}>
+            <div className="projectsList modalList">
+              <div
+                className={`projectsItem ${pt.active === "stopwatch" ? "projectsItemActive" : ""}`}
+              >
                 <button
                   className="projectsPick"
                   onClick={() => {
                     onApplyPreset("stopwatch");
-                    setTimerMenuOpen(false);
+                    setTimerModalOpen(false);
                   }}
                 >
                   {TEXTS.stopwatch}
                 </button>
               </div>
-
-              {[15, 25, 45, 60, 90].map((m) => (
+              {COUNTDOWN_PRESETS.map((m) => (
                 <div
                   key={m}
                   className={`projectsItem ${pt.active === "countdown" && pt.countdownMin === m ? "projectsItemActive" : ""}`}
@@ -203,20 +217,21 @@ export function FocusCard({
                     className="projectsPick"
                     onClick={() => {
                       onApplyPreset("countdown", m);
-                      setTimerMenuOpen(false);
+                      setTimerModalOpen(false);
                     }}
                   >
                     {m} {TEXTS.minutes}
                   </button>
                 </div>
               ))}
-
-              <div className={`projectsItem ${pt.active === "countdown" && ![15,25,45,60,90].includes(pt.countdownMin) ? "projectsItemActive" : ""}`}>
+              <div
+                className={`projectsItem ${customOpen || isCustomCountdown ? "projectsItemActive" : ""}`}
+              >
                 <button
                   className="projectsPick"
                   onClick={() => {
+                    setTimerModalOpen(false);
                     setCustomOpen(true);
-                    setTimerMenuOpen(false);
                   }}
                 >
                   {TEXTS.custom}
