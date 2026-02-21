@@ -170,16 +170,20 @@
   padding-bottom: 11px;
 }
 
-.cardHeader{ display:flex; justify-content: space-between; margin-bottom: 9px; gap: 9px; flex-wrap: wrap; }
+.cardHeader{
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-bottom: 9px;
+}
 .cardTitle{ font-size: 23px; font-weight: 950; letter-spacing: -0.2px; }
 .row{ display:flex; align-items:center; }
 .between{ justify-content: space-between; }
 .gap12{ gap: 12px; }
 
-/* Строка с «Избранное» и мини-статистикой: занимает всю ширину, статистика прижата вправо */
+/* Строка с «Избранное» и мини-статистикой — под заголовком, на всю ширину, статистика прижата вправо */
 .headerStatsRow{
-  flex: 1;
-  min-width: 0;
+  width: 100%;
 }
 
 .miniStatsGroup{
