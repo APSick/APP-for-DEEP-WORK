@@ -152,6 +152,7 @@ export default function App() {
             statsPeriod={stats.statsPeriod}
             currentStats={stats.currentStats}
             chartData={stats.chartData}
+            currentMonthName={stats.currentMonthName}
             customStatsFrom={stats.customStatsFrom}
             customStatsTo={stats.customStatsTo}
             onPeriodChange={stats.setStatsPeriod}

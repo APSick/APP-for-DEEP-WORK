@@ -1,4 +1,9 @@
 // src/components/StatsCard.tsx
+/**
+ * Карточка статистики: выбор периода (день/неделя/месяц/год/произвольный),
+ * блок «Всего», столбчатый график с пунктирными линиями (максимум и среднее по периоду).
+ * Для месяца: название месяца над «Всего», числа дней без троеточий.
+ */
 import { useState } from "react";
 import { TEXTS } from "../constants";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -9,6 +14,7 @@ interface StatsCardProps {
   statsPeriod: StatsPeriod;
   currentStats: { minutes: number; sessionsCount: number };
   chartData: ChartBar[];
+  currentMonthName: string | null;
   customStatsFrom: number;
   customStatsTo: number;
   onPeriodChange: (period: StatsPeriod) => void;
@@ -17,12 +23,22 @@ interface StatsCardProps {
   onClearHistory: () => void;
 }
 
-const SHOW_CHART_PERIODS: StatsPeriod[] = ["week", "month", "year", "custom"];
+/** Периоды, для которых показывается график со столбцами и пунктирными линиями */
+const SHOW_CHART_PERIODS: StatsPeriod[] = ["day", "week", "month", "year", "custom"];
+
+/** Форматирует минуты: «30 мин» или «2 ч 30 мин» для подписей у пунктирных линий и tooltip */
+function formatMinutes(m: number): string {
+  if (m < 60) return `${m} ${TEXTS.minutes}`;
+  const h = Math.floor(m / 60);
+  const min = Math.round(m % 60);
+  return min ? `${h} ${TEXTS.hours} ${min} ${TEXTS.minutes}` : `${h} ${TEXTS.hours}`;
+}
 
 export function StatsCard({
   statsPeriod,
   currentStats,
   chartData,
+  currentMonthName,
   customStatsFrom,
   customStatsTo,
   onPeriodChange,
@@ -30,7 +46,7 @@ export function StatsCard({
   onCustomToChange,
   onClearHistory,
 }: StatsCardProps) {
-  const [customStatsOpen, setCustomStatsOpen] = useState(false);
+  const [periodModalOpen, setPeriodModalOpen] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const periodLabel =
@@ -58,97 +74,115 @@ export function StatsCard({
         </div>
 
         <div style={{ marginTop: 16, marginBottom: 16 }}>
-          <div className="dropdownWrap">
-            <button className="pillButton" onClick={() => setCustomStatsOpen((v) => !v)}>
-              <span className="pillText">{periodLabel}</span>
-              <span className="caret">▼</span>
-            </button>
-
-            {customStatsOpen && (
-              <div className="glassMenu">
-                <div className="menu">
-                  <button
-                    className={`menuItem ${statsPeriod === "day" ? "menuActive" : ""}`}
-                    onClick={() => {
-                      onPeriodChange("day");
-                      setCustomStatsOpen(false);
-                    }}
-                  >
-                    <span className="check">{statsPeriod === "day" ? "✓" : ""}</span>
-                    {TEXTS.statsPeriodDay}
-                  </button>
-                  <button
-                    className={`menuItem ${statsPeriod === "week" ? "menuActive" : ""}`}
-                    onClick={() => {
-                      onPeriodChange("week");
-                      setCustomStatsOpen(false);
-                    }}
-                  >
-                    <span className="check">{statsPeriod === "week" ? "✓" : ""}</span>
-                    {TEXTS.statsPeriodWeek}
-                  </button>
-                  <button
-                    className={`menuItem ${statsPeriod === "month" ? "menuActive" : ""}`}
-                    onClick={() => {
-                      onPeriodChange("month");
-                      setCustomStatsOpen(false);
-                    }}
-                  >
-                    <span className="check">{statsPeriod === "month" ? "✓" : ""}</span>
-                    {TEXTS.statsPeriodMonth}
-                  </button>
-                  <button
-                    className={`menuItem ${statsPeriod === "year" ? "menuActive" : ""}`}
-                    onClick={() => {
-                      onPeriodChange("year");
-                      setCustomStatsOpen(false);
-                    }}
-                  >
-                    <span className="check">{statsPeriod === "year" ? "✓" : ""}</span>
-                    {TEXTS.statsPeriodYear}
-                  </button>
-                  <button
-                    className={`menuItem ${statsPeriod === "custom" ? "menuActive" : ""}`}
-                    onClick={() => {
-                      onPeriodChange("custom");
-                      setCustomStatsOpen(false);
-                    }}
-                  >
-                    <span className="check">{statsPeriod === "custom" ? "✓" : ""}</span>
-                    {TEXTS.statsPeriodCustomLabel}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <button
+            className="pillButton"
+            onClick={() => setPeriodModalOpen(true)}
+          >
+            <span className="pillText">{periodLabel}</span>
+            <span className="caret">▼</span>
+          </button>
         </div>
 
+        {periodModalOpen && (
+          <div className="overlay overlay--darker" onClick={() => setPeriodModalOpen(false)}>
+            <div className="glass modal" onClick={(e) => e.stopPropagation()}>
+              <div className="modalHeader">
+                <div className="modalTitle">{TEXTS.statsPeriodSelect}</div>
+                <button className="btnOutline" onClick={() => setPeriodModalOpen(false)}>
+                  {TEXTS.close}
+                </button>
+              </div>
+              <div className="projectsList modalList">
+                {(
+                  [
+                    { value: "day" as const, label: TEXTS.statsPeriodDay },
+                    { value: "week" as const, label: TEXTS.statsPeriodWeek },
+                    { value: "month" as const, label: TEXTS.statsPeriodMonth },
+                    { value: "year" as const, label: TEXTS.statsPeriodYear },
+                    { value: "custom" as const, label: TEXTS.statsPeriodCustomLabel },
+                  ] as const
+                ).map(({ value, label }) => (
+                  <div
+                    key={value}
+                    className={`projectsItem ${statsPeriod === value ? "projectsItemActive" : ""}`}
+                  >
+                    <button
+                      className="projectsPick"
+                      onClick={() => {
+                        onPeriodChange(value);
+                        setPeriodModalOpen(false);
+                      }}
+                    >
+                      {label}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="muted" style={{ marginTop: 8, marginBottom: 16 }}>
+          {statsPeriod === "month" && currentMonthName && (
+            <div style={{ marginBottom: 4, fontSize: 14 }}>{currentMonthName}</div>
+          )}
           {TEXTS.statsTotal}: {currentStats.minutes ? `${currentStats.minutes} ${TEXTS.minutes}` : "—"} •{" "}
           {currentStats.sessionsCount} {sessionsLabel}
         </div>
 
         {SHOW_CHART_PERIODS.includes(statsPeriod) && chartData.length > 0 && (() => {
           const maxMinutes = Math.max(1, ...chartData.map((b) => b.minutes));
+          const totalMinutes = chartData.reduce((s, b) => s + b.minutes, 0);
+          const bucketCount = chartData.length;
+          const avgMinutes = totalMinutes / bucketCount;
+          const MIN_BAR_HEIGHT_PCT = 8;
+          const chartAria =
+            statsPeriod === "day"
+              ? "График по часам дня"
+              : statsPeriod === "week"
+                ? "График по дням недели"
+                : statsPeriod === "month"
+                  ? "График по дням"
+                  : statsPeriod === "year"
+                    ? "График по месяцам"
+                    : "График периода";
+          const showRefLines = totalMinutes > 0;
           return (
             <div className="statsChartWrap">
-              <div
-                className="statsChart"
-                role="img"
-                aria-label={`График по ${statsPeriod === "week" ? "дням недели" : statsPeriod === "month" ? "дням месяца" : "месяцам"}`}
-              >
-                {chartData.map((bar, i) => (
+              <div className="statsChartContainer">
+                {showRefLines && (
+                <div className="statsChartRefOverlay" aria-hidden>
+                  <div className="statsChartRefLine statsChartRefLineMax" />
+                  <span className="statsChartRefLabel statsChartRefLabelMax">{formatMinutes(maxMinutes)}</span>
+                  <div className="statsChartRefLine statsChartRefLineAvg" />
+                  <span className="statsChartRefLabel statsChartRefLabelAvg">{formatMinutes(Math.round(avgMinutes * 10) / 10)}</span>
+                </div>
+                )}
+                <div
+                  className="statsChart"
+                  data-period={statsPeriod}
+                  role="img"
+                  aria-label={chartAria}
+                >
+                {chartData.map((bar, i) => {
+                  const tooltip =
+                    statsPeriod === "day"
+                      ? `${bar.label}:00–${String((Number(bar.label) + 1) % 24).padStart(2, "0")}:00: ${formatMinutes(bar.minutes)}`
+                      : `${bar.label}: ${formatMinutes(bar.minutes)}`;
+                  return (
                   <div key={i} className="statsChartBarCell">
                     <div
                       className="statsChartBar"
                       style={{
-                        height: `${(bar.minutes / maxMinutes) * 100}%`,
+                        height: `${bar.minutes > 0 ? Math.max(MIN_BAR_HEIGHT_PCT, (bar.minutes / maxMinutes) * 100) : 0}%`,
                       }}
-                      title={`${bar.label}: ${bar.minutes} ${TEXTS.minutes}`}
+                      title={tooltip}
                     />
                     <span className="statsChartLabel">{bar.label}</span>
                   </div>
-                ))}
+                );
+                })}
+              </div>
               </div>
             </div>
           );

@@ -1,22 +1,42 @@
 // src/hooks/useStats.ts
+/**
+ * Хук useStats: расчёт статистики и данных для графика по сессиям фокуса.
+ * Поддерживает периоды: день, календарная неделя (ПН–ВС), календарный месяц, год, произвольный.
+ * Для каждого периода считаются сумма минут, число сеансов и массив столбцов графика (label + minutes).
+ */
+
 import { useMemo, useState } from "react";
 import type { Session } from "../storage";
 
+/** Доступные периоды статистики */
 export type StatsPeriod = "day" | "week" | "month" | "year" | "custom";
 
+/** Один столбец графика: подпись по оси X и минуты */
 export type ChartBar = { label: string; minutes: number };
 
+/** Короткие названия месяцев для подписей (янв, фев, …) */
 const MONTH_NAMES_SHORT = [
   "Янв", "Фев", "Мар", "Апр", "Май", "Июн",
   "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек",
 ];
 
+/** Полные названия месяцев (Январь, Февраль, …) — для заголовка над «Всего» в режиме месяц */
+const MONTH_NAMES_FULL = [
+  "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
+  "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
+];
+
+/** Дни недели для подписей графика недели: ПН, ВТ, СР, … */
+const DAY_NAMES_SHORT = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
+
+/** Начало календарного дня (00:00:00.000) в ms */
 function startOfDay(ms: number): number {
   const d = new Date(ms);
   d.setHours(0, 0, 0, 0);
   return d.getTime();
 }
 
+/** Начало календарного месяца (1-е число, 00:00:00.000) в ms */
 function startOfMonth(ms: number): number {
   const d = new Date(ms);
   d.setDate(1);
@@ -24,17 +44,33 @@ function startOfMonth(ms: number): number {
   return d.getTime();
 }
 
-/** Понедельник 00:00 для данной даты */
+/** Конец календарного месяца (последний день 23:59:59.999) в ms */
+function endOfMonth(ms: number): number {
+  const d = new Date(ms);
+  d.setMonth(d.getMonth() + 1);
+  d.setDate(0); // последний день предыдущего месяца
+  d.setHours(23, 59, 59, 999);
+  return d.getTime();
+}
+
+/** Начало календарной недели: понедельник 00:00:00.000 для данной даты (неделя ПН–ВС) */
 function startOfWeek(ms: number): number {
   const d = new Date(ms);
   d.setHours(0, 0, 0, 0);
-  const dayOfWeek = d.getDay();
+  const dayOfWeek = d.getDay(); // 0=ВС, 1=ПН, …
   const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   d.setDate(d.getDate() - daysToMonday);
   return d.getTime();
 }
 
+/** Конец календарной недели: воскресенье 23:59:59.999 */
+function endOfWeek(ms: number): number {
+  const start = startOfWeek(ms);
+  return start + 7 * DAY_MS - 1;
+}
+
 const DAY_MS = 24 * 3600 * 1000;
+const HOUR_MS = 3600 * 1000;
 const ONE_MONTH_DAYS = 31;
 const THREE_MONTHS_DAYS = 92;
 
@@ -43,14 +79,17 @@ export function useStats(history: Session[]) {
   const [customStatsFrom, setCustomStatsFrom] = useState<number>(Date.now() - 7 * 24 * 3600 * 1000);
   const [customStatsTo, setCustomStatsTo] = useState<number>(Date.now());
 
-  const { todayStats, weekStats, currentStats, chartData } = useMemo(() => {
+  const { todayStats, weekStats, currentStats, chartData, currentMonthName } = useMemo(() => {
     const now = Date.now();
     const dayStart = new Date();
     dayStart.setHours(0, 0, 0, 0);
     const fromDay = dayStart.getTime();
-    const fromWeek = now - 7 * 24 * 3600 * 1000;
-    const fromMonth = now - 30 * 24 * 3600 * 1000;
-    const fromYear = now - 365 * 24 * 3600 * 1000;
+    // Границы периодов: неделя — ПН 00:00 … ВС 23:59, месяц — 1-е … последний день, год — 12 календарных месяцев
+    const fromWeek = startOfWeek(now);
+    const fromMonth = startOfMonth(now);
+    const yearFirstMonth = new Date(now);
+    yearFirstMonth.setMonth(yearFirstMonth.getMonth() - 11);
+    const fromYear = startOfMonth(yearFirstMonth.getTime());
 
     let dayMinutes = 0;
     let dayCount = 0;
@@ -61,6 +100,7 @@ export function useStats(history: Session[]) {
 
     const fromCustom = customStatsFrom;
     const toCustom = customStatsTo;
+    const toMonth = endOfMonth(now);
     const fromByPeriod =
       statsPeriod === "day"
         ? fromDay
@@ -71,7 +111,15 @@ export function useStats(history: Session[]) {
             : statsPeriod === "year"
               ? fromYear
               : fromCustom;
-    const toByPeriod = statsPeriod === "custom" ? toCustom : now;
+    const toWeek = endOfWeek(now);
+    const toByPeriod =
+      statsPeriod === "month"
+        ? toMonth
+        : statsPeriod === "week"
+          ? toWeek
+          : statsPeriod === "custom"
+            ? toCustom
+            : now;
 
     for (const s of history) {
       if (s.type !== "focus") continue;
@@ -91,71 +139,100 @@ export function useStats(history: Session[]) {
       }
     }
 
-    // Данные для графика: по дням (неделя/месяц) или по месяцам (год)
+    // Формируем массив столбцов графика в зависимости от периода.
+    // День: 24 часа, пересечение сессии с каждым часом в минутах.
+    // Неделя: 7 дней (ПН … ВС), подпись «ПН 16», «ВТ 17» и т.д., сумма минут за день.
+    // Месяц: 28–31 день, подпись — число (1, 2, …), сумма минут за день.
+    // Год: 12 месяцев (Янв, Фев, …), сумма минут за календарный месяц.
     let chartData: ChartBar[] = [];
 
-    if (statsPeriod === "week") {
+    if (statsPeriod === "day") {
+      // День: 24 ячейки по часу. Сессия 10:30–11:40 даёт 30 мин в часе 10 и 40 мин в часе 11 (пересечение по времени).
+      const toMs = (t: number) => (t > 1e12 ? t : t * 1000);
       const buckets = new Map<number, number>();
-      const dayMs = 24 * 3600 * 1000;
-      for (let i = 0; i < 7; i++) {
-        const t = startOfDay(now - (6 - i) * dayMs);
-        buckets.set(t, 0);
-      }
+      for (let h = 0; h < 24; h++) buckets.set(h, 0);
+      const dayStartMs = fromDay;
+      const dayEndMs = now;
       for (const s of history) {
         if (s.type !== "focus") continue;
-        const key = startOfDay(s.endedAt);
-        if (buckets.has(key)) buckets.set(key, buckets.get(key)! + s.durationSec);
+        const start = toMs(s.startedAt);
+        const end = toMs(s.endedAt);
+        if (end < dayStartMs || start > dayEndMs) continue;
+        for (let h = 0; h < 24; h++) {
+          const hourStart = dayStartMs + h * HOUR_MS;
+          const hourEnd = dayStartMs + (h + 1) * HOUR_MS;
+          const overlapMs = Math.max(0, Math.min(end, hourEnd) - Math.max(start, hourStart));
+          buckets.set(h, buckets.get(h)! + overlapMs / 60000);
+        }
       }
-      const sortedKeys = Array.from(buckets.keys()).sort((a, b) => a - b);
-      chartData = sortedKeys.map((key) => {
-        const d = new Date(key);
-        const label = `${d.getDate()} ${MONTH_NAMES_SHORT[d.getMonth()]}`;
-        return { label, minutes: Math.round((buckets.get(key)! / 60) * 10) / 10 };
+      chartData = Array.from({ length: 24 }, (_, h) => ({
+        label: `${String(h).padStart(2, "0")}`,
+        minutes: Math.round(buckets.get(h)! * 10) / 10,
+      }));
+    } else if (statsPeriod === "week") {
+      // Неделя: 7 календарных дней (ПН–ВС). Сессии распределяются по дню окончания (startOfDay(endedAt)).
+      const bucketSec = new Array<number>(7).fill(0);
+      const weekStart = fromByPeriod;
+      for (const s of history) {
+        if (s.type !== "focus") continue;
+        if (s.endedAt < weekStart || s.endedAt > toByPeriod) continue;
+        const dayIndex = Math.min(6, Math.max(0, Math.floor((startOfDay(s.endedAt) - weekStart) / DAY_MS)));
+        bucketSec[dayIndex] += s.durationSec;
+      }
+      chartData = bucketSec.map((sec, i) => {
+        const dayStartMs = fromByPeriod + i * DAY_MS;
+        const d = new Date(dayStartMs);
+        const label = `${DAY_NAMES_SHORT[i]} ${d.getDate()}`; // «ПН 16», «ВТ 17», …
+        return { label, minutes: Math.round((sec / 60) * 10) / 10 };
       });
     } else if (statsPeriod === "month") {
-      const buckets = new Map<number, number>();
-      const dayMs = 24 * 3600 * 1000;
-      for (let i = 0; i < 30; i++) {
-        const t = startOfDay(now - (29 - i) * dayMs);
-        buckets.set(t, 0);
-      }
+      // Месяц: календарный месяц, столбцов 28–31. Подпись — только число дня (1, 2, … 31).
+      // Название месяца (Февраль и т.д.) показывается над блоком «Всего» в UI.
+      const monthStart = fromByPeriod;
+      const monthEnd = toByPeriod;
+      const dFirst = new Date(monthStart);
+      const daysInMonth = new Date(dFirst.getFullYear(), dFirst.getMonth() + 1, 0).getDate();
+      const bucketSec = new Array<number>(daysInMonth).fill(0);
       for (const s of history) {
         if (s.type !== "focus") continue;
-        const key = startOfDay(s.endedAt);
-        if (buckets.has(key)) buckets.set(key, buckets.get(key)! + s.durationSec);
+        if (s.endedAt < monthStart || s.endedAt > monthEnd) continue;
+        const dayOfMonth = new Date(s.endedAt).getDate();
+        bucketSec[dayOfMonth - 1] += s.durationSec;
       }
-      const sortedKeys = Array.from(buckets.keys()).sort((a, b) => a - b);
-      chartData = sortedKeys.map((key) => {
-        const d = new Date(key);
+      chartData = bucketSec.map((sec, i) => {
+        const d = new Date(dFirst.getFullYear(), dFirst.getMonth(), i + 1);
         const label = `${d.getDate()}`;
-        return { label, minutes: Math.round((buckets.get(key)! / 60) * 10) / 10 };
+        return { label, minutes: Math.round((sec / 60) * 10) / 10 };
       });
     } else if (statsPeriod === "year") {
-      const buckets = new Map<number, number>();
+      // Год: 12 календарных месяцев. Сессия попадает в месяц по endedAt (янв 1–31, фев 1–28/29 и т.д.).
+      const monthStarts: number[] = [];
       for (let i = 0; i < 12; i++) {
         const d = new Date(now);
         d.setMonth(d.getMonth() - (11 - i));
-        const t = startOfMonth(d.getTime());
-        buckets.set(t, 0);
+        monthStarts.push(startOfMonth(d.getTime()));
       }
+      const bucketSec = new Array<number>(12).fill(0);
       for (const s of history) {
         if (s.type !== "focus") continue;
-        const key = startOfMonth(s.endedAt);
-        if (buckets.has(key)) buckets.set(key, buckets.get(key)! + s.durationSec);
+        if (s.endedAt < monthStarts[0] || s.endedAt > toByPeriod) continue;
+        let i = 0;
+        while (i < 11 && s.endedAt >= monthStarts[i + 1]) i++;
+        bucketSec[i] += s.durationSec;
       }
-      const sortedKeys = Array.from(buckets.keys()).sort((a, b) => a - b);
-      chartData = sortedKeys.map((key) => {
-        const d = new Date(key);
+      chartData = bucketSec.map((sec, i) => {
+        const d = new Date(monthStarts[i]);
         const label = MONTH_NAMES_SHORT[d.getMonth()];
-        return { label, minutes: Math.round((buckets.get(key)! / 60) * 10) / 10 };
+        return { label, minutes: Math.round((sec / 60) * 10) / 10 };
       });
     } else if (statsPeriod === "custom") {
+      // Произвольный период: от и до в ms. В зависимости от длины — по дням, неделям или месяцам.
       const from = startOfDay(fromCustom);
       const to = toCustom;
       const rangeDays = (to - from) / DAY_MS;
 
       if (rangeDays <= ONE_MONTH_DAYS) {
-        // До 1 месяца — по дням
+        // До 31 дня — один столбец на календарный день
         const buckets = new Map<number, number>();
         const toDayStart = startOfDay(to);
         for (let t = from; t <= toDayStart; t += DAY_MS) {
@@ -174,7 +251,7 @@ export function useStats(history: Session[]) {
           return { label, minutes: Math.round((buckets.get(key)! / 60) * 10) / 10 };
         });
       } else if (rangeDays <= THREE_MONTHS_DAYS) {
-        // Свыше 1 месяца до 3 месяцев — по неделям
+        // От месяца до ~3 месяцев — по календарным неделям (ПН–ВС)
         const buckets = new Map<number, number>();
         let weekStart = startOfWeek(from);
         while (weekStart <= to) {
@@ -194,7 +271,7 @@ export function useStats(history: Session[]) {
           return { label, minutes: Math.round((buckets.get(key)! / 60) * 10) / 10 };
         });
       } else {
-        // Свыше 3 месяцев — по месяцам
+        // Больше 3 месяцев — по календарным месяцам
         const buckets = new Map<number, number>();
         let monthStart = startOfMonth(from);
         const toMonthStart = startOfMonth(to);
@@ -219,6 +296,10 @@ export function useStats(history: Session[]) {
       }
     }
 
+    // Для режима «Месяц» — полное название месяца (Январь, Февраль, …) для заголовка над «Всего».
+    const currentMonthName =
+      statsPeriod === "month" ? MONTH_NAMES_FULL[new Date(fromByPeriod).getMonth()] : null;
+
     return {
       todayStats: { minutes: Math.round(dayMinutes / 60), sessionsCount: dayCount },
       weekStats: { minutes: Math.round(weekMinutes / 60), sessionsCount: weekCount },
@@ -227,6 +308,7 @@ export function useStats(history: Session[]) {
         sessionsCount: periodCount,
       },
       chartData,
+      currentMonthName,
     };
   }, [history, statsPeriod, customStatsFrom, customStatsTo]);
 
@@ -241,5 +323,6 @@ export function useStats(history: Session[]) {
     weekStats,
     currentStats,
     chartData,
+    currentMonthName,
   };
 }

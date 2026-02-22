@@ -36,6 +36,7 @@ export const TEXTS = {
   musicPlaceholder: "Подключим позже. Сейчас это вкладка-заготовка.",
   
   // Статистика
+  hours: "ч",
   stats: "Статистика",
   statsToday: "сегодня",
   statsWeek: "за неделю",
@@ -43,8 +44,8 @@ export const TEXTS = {
   statsSessions: "сеанс",
   statsSessionsPlural: "сеансов",
   statsPeriodDay: "1 день",
-  statsPeriodWeek: "1 неделя",
-  statsPeriodMonth: "1 месяц",
+  statsPeriodWeek: "Неделя",
+  statsPeriodMonth: "Месяц",
   statsPeriodYear: "1 год",
   statsPeriodCustom: "Произвольный период",
   statsPeriodCustomLabel: "Произвольный",

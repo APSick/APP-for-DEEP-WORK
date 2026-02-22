@@ -19,6 +19,12 @@
   --dangerBg: rgba(255, 80, 80, 0.14);
 
   --navSpace: 140px; /* место под нижнюю панель */
+
+  /* Единые стили для всех модалок (Проекты, Секундомер, Музыка, выбор периода и т.д.) */
+  --overlay-bg: rgba(0, 0, 0, 0.4);
+  --overlay-blur: blur(22px) saturate(140%);
+  /* Панель модалки: чуть плотнее, чтобы не зависеть от количества контента внутри */
+  --modal-glass-bg: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.06));
 }
 
 .appRoot {
@@ -159,8 +165,8 @@
   background: linear-gradient(180deg, var(--glass), var(--glass2));
   border: 1px solid var(--stroke);
   border-radius: 26px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
   box-shadow: 0 18px 60px rgba(0,0,0,0.45);
 }
 .card{ padding: 14px; }
@@ -283,8 +289,8 @@
   border-radius: 22px;
   background: linear-gradient(180deg, var(--glass), var(--glass2));
   border: 1px solid var(--stroke);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
   box-shadow: 0 18px 60px rgba(0,0,0,0.45);
   z-index: 60;
   touch-action: pan-y;
@@ -489,15 +495,17 @@
   border: 1px solid rgba(255, 234, 102, 0.24);
 }
 
-/* ===== Modal overlay (Deep Work открывается всегда полностью) ===== */
+/* ===== Modal overlay (Deep Work, Секундомер, Музыка, выбор периода и т.д.) ===== */
 .overlay{
   position: fixed;
   inset: 0;
   z-index: 120;
+  isolation: isolate;
+  transform: translateZ(0);
 
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  background: var(--overlay-bg);
+  backdrop-filter: var(--overlay-blur);
+  -webkit-backdrop-filter: var(--overlay-blur);
 
   display: flex;
   align-items: center;
@@ -507,6 +515,20 @@
   touch-action: none;
 }
 
+/* Страница статистики: выбор периода (день/неделя/дата) — темнее фон */
+.overlay--darker{
+  background: rgba(0, 0, 0, 0.65);
+}
+
+/* Панель модалки — одна и та же прозрачность и блюр для всех (Проекты = Секундомер = Музыка и т.д.) */
+.overlay > .glass.modal{
+  background: var(--modal-glass-bg) !important;
+  backdrop-filter: var(--overlay-blur) !important;
+  -webkit-backdrop-filter: var(--overlay-blur) !important;
+  border-radius: 26px;
+  border: 1px solid var(--stroke);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+}
 
 .modal{
   width: min(420px, calc(100vw - 32px));
@@ -659,8 +681,8 @@
   border-radius: 22px;
   border: 1px solid var(--stroke);
   background: linear-gradient(180deg, var(--glass), var(--glass2));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
   box-shadow: 0 18px 60px rgba(0,0,0,0.45);
   padding: 12px;
   max-height: min(70dvh, 520px);
@@ -680,14 +702,68 @@
   gap: 10px;
 }
 
-/* ===== График статистики ===== */
+/* ===== График статистики =====
+ * Оборачивает график: контейнер с padding справа под подписи времени у пунктирных линий.
+ * overflow-x: hidden — без горизонтального скролла; весь период должен влезать.
+ */
 .statsChartWrap {
   margin-top: 16px;
   margin-bottom: 16px;
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
+}
+
+/* Контейнер графика: padding-right для подписей (макс/среднее) справа от пунктирных линий */
+.statsChartContainer {
+  position: relative;
+  padding-right: 86px;
+}
+
+/* Оверлей с пунктирными линиями (макс — вверху, среднее — на 50% высоты) и подписями справа */
+.statsChartRefOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 86px;
+  height: 120px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Пунктирная линия: макс — касается верхней точки столбцов, среднее — ровно по середине (50%) */
+.statsChartRefLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px dashed rgba(255, 255, 255, 0.4);
+}
+
+.statsChartRefLineMax {
+  top: 0;
+}
+
+.statsChartRefLineAvg {
+  bottom: 50%;
+  border-top-color: rgba(255, 255, 255, 0.3);
+}
+
+.statsChartRefLabel {
+  position: absolute;
+  right: -80px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.55);
+  white-space: nowrap;
+}
+
+.statsChartRefLabelMax {
+  top: 0;
+  transform: translateY(-50%);
+}
+
+.statsChartRefLabelAvg {
+  bottom: 50%;
+  transform: translateY(50%);
 }
 
 .statsChart {
@@ -705,8 +781,24 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-end;
   min-width: 20px;
   max-width: 32px;
+  height: 120px;
+}
+
+/* Месяц: столбцы уже (min-width 6px), чтобы весь месяц (28–31 день) влезал без скролла
+ * и заканчивался там же, где пунктирные линии. width: 100% — использование всей ширины.
+ */
+.statsChart[data-period="month"] {
+  width: 100%;
+  max-width: 100%;
+}
+
+.statsChart[data-period="month"] .statsChartBarCell {
+  flex: 1;
+  min-width: 6px;
+  max-width: 12px;
 }
 
 .statsChartBar {
@@ -728,4 +820,13 @@
   text-overflow: ellipsis;
   max-width: 100%;
   text-align: center;
+}
+
+/* Месяц: числа дней (1, 2, … 31) видны полностью — убираем text-overflow: ellipsis,
+ * overflow: visible, font-size: 9px чтобы помещались в узкие столбцы.
+ */
+.statsChart[data-period="month"] .statsChartLabel {
+  overflow: visible;
+  text-overflow: unset;
+  font-size: 9px;
 }
