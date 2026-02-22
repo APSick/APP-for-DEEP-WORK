@@ -5,7 +5,7 @@
  * Для каждого периода считаются сумма минут, число сеансов и массив столбцов графика (label + minutes).
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Session } from "../storage";
 
 /** Доступные периоды статистики */
@@ -33,6 +33,13 @@ const DAY_NAMES_SHORT = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"]
 function startOfDay(ms: number): number {
   const d = new Date(ms);
   d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+/** Конец календарного дня (23:59:59.999) в ms */
+function endOfDay(ms: number): number {
+  const d = new Date(ms);
+  d.setHours(23, 59, 59, 999);
   return d.getTime();
 }
 
@@ -76,20 +83,64 @@ const THREE_MONTHS_DAYS = 92;
 
 export function useStats(history: Session[]) {
   const [statsPeriod, setStatsPeriod] = useState<StatsPeriod>("week");
+  const [periodOffset, setPeriodOffset] = useState(0); // 0 = текущий период, -1 = предыдущий, 1 = следующий
   const [customStatsFrom, setCustomStatsFrom] = useState<number>(Date.now() - 7 * 24 * 3600 * 1000);
   const [customStatsTo, setCustomStatsTo] = useState<number>(Date.now());
 
-  const { todayStats, weekStats, currentStats, chartData, currentMonthName } = useMemo(() => {
+  useEffect(() => {
+    setPeriodOffset(0);
+  }, [statsPeriod]);
+
+  const { todayStats, weekStats, currentStats, chartData, currentMonthName, currentYearName, currentWeekLabel } = useMemo(() => {
     const now = Date.now();
+
     const dayStart = new Date();
     dayStart.setHours(0, 0, 0, 0);
     const fromDay = dayStart.getTime();
-    // Границы периодов: неделя — ПН 00:00 … ВС 23:59, месяц — 1-е … последний день, год — 12 календарных месяцев
     const fromWeek = startOfWeek(now);
-    const fromMonth = startOfMonth(now);
-    const yearFirstMonth = new Date(now);
-    yearFirstMonth.setMonth(yearFirstMonth.getMonth() - 11);
-    const fromYear = startOfMonth(yearFirstMonth.getTime());
+
+    const viewDayDate = new Date(now);
+    viewDayDate.setDate(viewDayDate.getDate() + periodOffset);
+    const fromDayView = startOfDay(viewDayDate.getTime());
+    const toDayView = endOfDay(viewDayDate.getTime());
+
+    const fromWeekView = startOfWeek(now) + periodOffset * 7 * DAY_MS;
+    const toWeekView = endOfWeek(fromWeekView);
+
+    const viewMonthDate = new Date(now);
+    viewMonthDate.setMonth(viewMonthDate.getMonth() + periodOffset);
+    const fromMonth = startOfMonth(viewMonthDate.getTime());
+    const toMonth = endOfMonth(viewMonthDate.getTime());
+
+    const viewYear = new Date(now).getFullYear() + periodOffset;
+    const fromYear = new Date(viewYear, 0, 1).getTime();
+    const toYear = endOfMonth(new Date(viewYear, 11, 1).getTime());
+
+    const fromCustom = customStatsFrom;
+    const toCustom = customStatsTo;
+
+    const fromByPeriod =
+      statsPeriod === "day"
+        ? fromDayView
+        : statsPeriod === "week"
+          ? fromWeekView
+          : statsPeriod === "month"
+            ? fromMonth
+            : statsPeriod === "year"
+              ? fromYear
+              : fromCustom;
+    const toByPeriod =
+      statsPeriod === "day"
+        ? toDayView
+        : statsPeriod === "month"
+          ? toMonth
+          : statsPeriod === "year"
+            ? toYear
+            : statsPeriod === "week"
+              ? toWeekView
+              : statsPeriod === "custom"
+                ? toCustom
+                : now;
 
     let dayMinutes = 0;
     let dayCount = 0;
@@ -97,29 +148,6 @@ export function useStats(history: Session[]) {
     let weekCount = 0;
     let periodMinutes = 0;
     let periodCount = 0;
-
-    const fromCustom = customStatsFrom;
-    const toCustom = customStatsTo;
-    const toMonth = endOfMonth(now);
-    const fromByPeriod =
-      statsPeriod === "day"
-        ? fromDay
-        : statsPeriod === "week"
-          ? fromWeek
-          : statsPeriod === "month"
-            ? fromMonth
-            : statsPeriod === "year"
-              ? fromYear
-              : fromCustom;
-    const toWeek = endOfWeek(now);
-    const toByPeriod =
-      statsPeriod === "month"
-        ? toMonth
-        : statsPeriod === "week"
-          ? toWeek
-          : statsPeriod === "custom"
-            ? toCustom
-            : now;
 
     for (const s of history) {
       if (s.type !== "focus") continue;
@@ -147,12 +175,12 @@ export function useStats(history: Session[]) {
     let chartData: ChartBar[] = [];
 
     if (statsPeriod === "day") {
-      // День: 24 ячейки по часу. Сессия 10:30–11:40 даёт 30 мин в часе 10 и 40 мин в часе 11 (пересечение по времени).
+      // День: 24 ячейки по часу для просматриваемой даты (fromByPeriod…toByPeriod).
       const toMs = (t: number) => (t > 1e12 ? t : t * 1000);
       const buckets = new Map<number, number>();
       for (let h = 0; h < 24; h++) buckets.set(h, 0);
-      const dayStartMs = fromDay;
-      const dayEndMs = now;
+      const dayStartMs = fromByPeriod;
+      const dayEndMs = toByPeriod;
       for (const s of history) {
         if (s.type !== "focus") continue;
         const start = toMs(s.startedAt);
@@ -205,12 +233,11 @@ export function useStats(history: Session[]) {
         return { label, minutes: Math.round((sec / 60) * 10) / 10 };
       });
     } else if (statsPeriod === "year") {
-      // Год: 12 календарных месяцев. Сессия попадает в месяц по endedAt (янв 1–31, фев 1–28/29 и т.д.).
+      // Год: 12 календарных месяцев с января по декабрь просматриваемого года.
       const monthStarts: number[] = [];
+      const yearNum = new Date(fromByPeriod).getFullYear();
       for (let i = 0; i < 12; i++) {
-        const d = new Date(now);
-        d.setMonth(d.getMonth() - (11 - i));
-        monthStarts.push(startOfMonth(d.getTime()));
+        monthStarts.push(new Date(yearNum, i, 1).getTime());
       }
       const bucketSec = new Array<number>(12).fill(0);
       for (const s of history) {
@@ -296,9 +323,22 @@ export function useStats(history: Session[]) {
       }
     }
 
-    // Для режима «Месяц» — полное название месяца (Январь, Февраль, …) для заголовка над «Всего».
+    // Заголовки над «Всего»: месяц (Январь, …), год (2025), неделя (17–23 февраля).
     const currentMonthName =
       statsPeriod === "month" ? MONTH_NAMES_FULL[new Date(fromByPeriod).getMonth()] : null;
+    const currentYearName =
+      statsPeriod === "year" ? String(new Date(fromByPeriod).getFullYear()) : null;
+    const currentWeekLabel =
+      statsPeriod === "week"
+        ? (() => {
+            const d1 = new Date(fromByPeriod);
+            const d2 = new Date(toByPeriod);
+            const fmt = (d: Date) => `${d.getDate()} ${MONTH_NAMES_SHORT[d.getMonth()]}`;
+            return d1.getMonth() === d2.getMonth()
+              ? `${d1.getDate()}–${d2.getDate()} ${MONTH_NAMES_SHORT[d1.getMonth()]}`
+              : `${fmt(d1)} – ${fmt(d2)}`;
+          })()
+        : null;
 
     return {
       todayStats: { minutes: Math.round(dayMinutes / 60), sessionsCount: dayCount },
@@ -309,12 +349,21 @@ export function useStats(history: Session[]) {
       },
       chartData,
       currentMonthName,
+      currentYearName,
+      currentWeekLabel,
     };
-  }, [history, statsPeriod, customStatsFrom, customStatsTo]);
+  }, [history, statsPeriod, periodOffset, customStatsFrom, customStatsTo]);
+
+  const canGoNext = periodOffset < 0;
+  const showPeriodArrows = statsPeriod !== "custom";
 
   return {
     statsPeriod,
     setStatsPeriod,
+    periodOffset,
+    setPeriodOffset,
+    canGoNext,
+    showPeriodArrows,
     customStatsFrom,
     setCustomStatsFrom,
     customStatsTo,
@@ -324,5 +373,7 @@ export function useStats(history: Session[]) {
     currentStats,
     chartData,
     currentMonthName,
+    currentYearName,
+    currentWeekLabel,
   };
 }

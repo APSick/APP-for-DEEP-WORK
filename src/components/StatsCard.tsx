@@ -15,6 +15,12 @@ interface StatsCardProps {
   currentStats: { minutes: number; sessionsCount: number };
   chartData: ChartBar[];
   currentMonthName: string | null;
+  currentYearName: string | null;
+  currentWeekLabel: string | null;
+  showPeriodArrows: boolean;
+  canGoNext: boolean;
+  onPeriodPrev: () => void;
+  onPeriodNext: () => void;
   customStatsFrom: number;
   customStatsTo: number;
   onPeriodChange: (period: StatsPeriod) => void;
@@ -39,6 +45,12 @@ export function StatsCard({
   currentStats,
   chartData,
   currentMonthName,
+  currentYearName,
+  currentWeekLabel,
+  showPeriodArrows,
+  canGoNext,
+  onPeriodPrev,
+  onPeriodNext,
   customStatsFrom,
   customStatsTo,
   onPeriodChange,
@@ -73,10 +85,32 @@ export function StatsCard({
           </button>
         </div>
 
-        <div style={{ marginTop: 16, marginBottom: 16 }}>
+        <div style={{ marginTop: 16, marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+          {showPeriodArrows && (
+            <>
+              <button
+                type="button"
+                className="statsPeriodArrow"
+                onClick={onPeriodPrev}
+                aria-label="Предыдущий период"
+              >
+                ←
+              </button>
+              <button
+                type="button"
+                className="statsPeriodArrow"
+                onClick={onPeriodNext}
+                disabled={!canGoNext}
+                aria-label="Следующий период"
+              >
+                →
+              </button>
+            </>
+          )}
           <button
             className="pillButton"
             onClick={() => setPeriodModalOpen(true)}
+            style={{ flex: 1 }}
           >
             <span className="pillText">{periodLabel}</span>
             <span className="caret">▼</span>
@@ -125,6 +159,12 @@ export function StatsCard({
         <div className="muted" style={{ marginTop: 8, marginBottom: 16 }}>
           {statsPeriod === "month" && currentMonthName && (
             <div style={{ marginBottom: 4, fontSize: 14 }}>{currentMonthName}</div>
+          )}
+          {statsPeriod === "year" && currentYearName && (
+            <div style={{ marginBottom: 4, fontSize: 14 }}>{currentYearName}</div>
+          )}
+          {statsPeriod === "week" && currentWeekLabel && (
+            <div style={{ marginBottom: 4, fontSize: 14 }}>Неделя {currentWeekLabel}</div>
           )}
           {TEXTS.statsTotal}: {currentStats.minutes ? `${currentStats.minutes} ${TEXTS.minutes}` : "—"} •{" "}
           {currentStats.sessionsCount} {sessionsLabel}

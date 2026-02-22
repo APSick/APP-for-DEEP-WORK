@@ -279,6 +279,29 @@
 .pillText{ opacity: 0.92; }
 .caret{ opacity: 0.75; }
 
+.statsPeriodArrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--stroke2);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  opacity: 0.9;
+}
+.statsPeriodArrow:hover:not(:disabled) {
+  background: rgba(255,255,255,0.08);
+}
+.statsPeriodArrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 /* Выпадающий список в едином стиле с Deep Work (как модалка проектов) */
 .glassMenu{
   position: absolute;
@@ -826,11 +849,7 @@
   text-align: center;
 }
 
-/* Месяц: числа дней (1, 2, … 31) видны полностью — убираем text-overflow: ellipsis,
- * overflow: visible, font-size: 9px чтобы помещались в узкие столбцы.
- */
+/* Месяц: подписи под столбцами (числа дней) не показываем */
 .statsChart[data-period="month"] .statsChartLabel {
-  overflow: visible;
-  text-overflow: unset;
-  font-size: 9px;
+  display: none;
 }

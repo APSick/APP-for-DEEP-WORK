@@ -153,6 +153,12 @@ export default function App() {
             currentStats={stats.currentStats}
             chartData={stats.chartData}
             currentMonthName={stats.currentMonthName}
+            currentYearName={stats.currentYearName}
+            currentWeekLabel={stats.currentWeekLabel}
+            showPeriodArrows={stats.showPeriodArrows}
+            canGoNext={stats.canGoNext}
+            onPeriodPrev={() => stats.setPeriodOffset((o) => o - 1)}
+            onPeriodNext={() => stats.setPeriodOffset((o) => o + 1)}
             customStatsFrom={stats.customStatsFrom}
             customStatsTo={stats.customStatsTo}
             onPeriodChange={stats.setStatsPeriod}
