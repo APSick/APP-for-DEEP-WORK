@@ -797,8 +797,12 @@
 
 .statsChart[data-period="month"] .statsChartBarCell {
   flex: 1;
-  min-width: 6px;
-  max-width: 12px;
+  min-width: 3px;
+  max-width: 6px;
+}
+
+.statsChart[data-period="month"] .statsChartBar {
+  min-width: 2px;
 }
 
 .statsChartBar {
