@@ -1,5 +1,5 @@
 // src/hooks/useTimer.ts
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   defaultPhaseTimer,
   loadTimeMode,
@@ -9,7 +9,14 @@ import {
   type TimeModeSnapshotV2,
   type TimerKind,
 } from "../storage";
+import { getCloudItem, getCloudTimerKey, setCloudItem } from "../telegram";
 import { calcCountdownRemaining, calcStopwatchSec } from "../utils/timer";
+
+function isValidSnapshotV2(x: unknown): x is TimeModeSnapshotV2 {
+  if (!x || typeof x !== "object") return false;
+  const o = x as Record<string, unknown>;
+  return o.v === 2 && (o.phase === "focus" || o.phase === "break") && o.focus != null && o.break != null;
+}
 
 export function useTimer() {
   const [phase, setPhase] = useState<Phase>("focus");
@@ -19,10 +26,37 @@ export function useTimer() {
     return { focus: defaultPhaseTimer(45, "stopwatch"), break: defaultPhaseTimer(15, "countdown") };
   });
 
-  // Сохранение в localStorage
+  const cloudLoadDone = useRef(false);
+
+  // Загрузка из облака при монтировании (синхронизация между устройствами)
+  useEffect(() => {
+    const key = getCloudTimerKey();
+    getCloudItem(key).then((raw) => {
+      if (!raw) {
+        cloudLoadDone.current = true;
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw) as unknown;
+        if (isValidSnapshotV2(parsed)) {
+          setPhase(parsed.phase);
+          setTimers({ focus: parsed.focus, break: parsed.break });
+        }
+      } finally {
+        cloudLoadDone.current = true;
+      }
+    }).catch(() => {
+      cloudLoadDone.current = true;
+    });
+  }, []);
+
+  // Сохранение в localStorage и в облако (после первой загрузки из облака — чтобы не перезаписать облако локальным состоянием)
   useEffect(() => {
     const snap: TimeModeSnapshotV2 = { v: 2, phase, focus: timers.focus, break: timers.break };
     saveTimeMode(snap);
+    if (cloudLoadDone.current) {
+      setCloudItem(getCloudTimerKey(), JSON.stringify(snap)).catch(() => { /* ignore */ });
+    }
   }, [phase, timers]);
 
   // Тик времени
