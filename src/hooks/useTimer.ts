@@ -39,8 +39,21 @@ export function useTimer() {
       try {
         const parsed = JSON.parse(raw) as unknown;
         if (isValidSnapshotV2(parsed)) {
+          const now = Date.now();
+          // Восстанавливаем startedAt на этом устройстве, чтобы таймер шёл от правильного elapsed/remaining (нет расхождения часов).
+          const rehydrate = (p: PhaseTimer): PhaseTimer => ({
+            ...p,
+            stopwatch:
+              p.stopwatch.running && p.stopwatch.startedAt == null
+                ? { ...p.stopwatch, startedAt: now }
+                : p.stopwatch,
+            countdown:
+              p.countdown.running && p.countdown.startedAt == null
+                ? { ...p.countdown, startedAt: now }
+                : p.countdown,
+          });
           setPhase(parsed.phase);
-          setTimers({ focus: parsed.focus, break: parsed.break });
+          setTimers({ focus: rehydrate(parsed.focus), break: rehydrate(parsed.break) });
         }
       } finally {
         cloudLoadDone.current = true;
@@ -50,12 +63,37 @@ export function useTimer() {
     });
   }, []);
 
-  // Сохранение в localStorage и в облако (после первой загрузки из облака — чтобы не перезаписать облако локальным состоянием)
+  // Сохранение в localStorage и в облако (после первой загрузки из облака — чтобы не перезаписать облако локальным состоянием).
+  // В облако пишем нормализованный снапшот (текущее elapsed/remaining, startedAt = null), чтобы на другом устройстве не было расхождения из‑за разницы часов.
   useEffect(() => {
     const snap: TimeModeSnapshotV2 = { v: 2, phase, focus: timers.focus, break: timers.break };
     saveTimeMode(snap);
     if (cloudLoadDone.current) {
-      setCloudItem(getCloudTimerKey(), JSON.stringify(snap)).catch(() => { /* ignore */ });
+      const now = Date.now();
+      const normFocus: PhaseTimer = {
+        ...timers.focus,
+        stopwatch:
+          timers.focus.stopwatch.running
+            ? { running: true, baseSec: calcStopwatchSec(timers.focus.stopwatch, now), startedAt: null }
+            : timers.focus.stopwatch,
+        countdown:
+          timers.focus.countdown.running
+            ? { ...timers.focus.countdown, baseRemainingSec: calcCountdownRemaining(timers.focus.countdown, now), startedAt: null }
+            : timers.focus.countdown,
+      };
+      const normBreak: PhaseTimer = {
+        ...timers.break,
+        stopwatch:
+          timers.break.stopwatch.running
+            ? { running: true, baseSec: calcStopwatchSec(timers.break.stopwatch, now), startedAt: null }
+            : timers.break.stopwatch,
+        countdown:
+          timers.break.countdown.running
+            ? { ...timers.break.countdown, baseRemainingSec: calcCountdownRemaining(timers.break.countdown, now), startedAt: null }
+            : timers.break.countdown,
+      };
+      const cloudSnap: TimeModeSnapshotV2 = { v: 2, phase, focus: normFocus, break: normBreak };
+      setCloudItem(getCloudTimerKey(), JSON.stringify(cloudSnap)).catch(() => { /* ignore */ });
     }
   }, [phase, timers]);
 

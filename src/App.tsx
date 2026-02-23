@@ -74,7 +74,7 @@ export default function App() {
 
   useEffect(() => {
     loadHistoryFromCloud().then((cloud) => {
-      if (cloud.length > 0) setHistory(cloud);
+      setHistory(cloud);
       cloudHistoryLoadDone.current = true;
     }).catch(() => {
       cloudHistoryLoadDone.current = true;
