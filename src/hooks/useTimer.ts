@@ -27,6 +27,25 @@ export function useTimer() {
   });
 
   const cloudLoadDone = useRef(false);
+  const lastAppliedWrittenAt = useRef(0);
+
+  const applyCloudSnapshot = (parsed: TimeModeSnapshotV2) => {
+    const now = Date.now();
+    const rehydrate = (p: PhaseTimer): PhaseTimer => ({
+      ...p,
+      stopwatch:
+        p.stopwatch.running && p.stopwatch.startedAt == null
+          ? { ...p.stopwatch, startedAt: now }
+          : p.stopwatch,
+      countdown:
+        p.countdown.running && p.countdown.startedAt == null
+          ? { ...p.countdown, startedAt: now }
+          : p.countdown,
+    });
+    setPhase(parsed.phase);
+    setTimers({ focus: rehydrate(parsed.focus), break: rehydrate(parsed.break) });
+    lastAppliedWrittenAt.current = parsed.writtenAt ?? 0;
+  };
 
   // Загрузка из облака при монтировании (синхронизация между устройствами)
   useEffect(() => {
@@ -39,21 +58,7 @@ export function useTimer() {
       try {
         const parsed = JSON.parse(raw) as unknown;
         if (isValidSnapshotV2(parsed)) {
-          const now = Date.now();
-          // Восстанавливаем startedAt на этом устройстве, чтобы таймер шёл от правильного elapsed/remaining (нет расхождения часов).
-          const rehydrate = (p: PhaseTimer): PhaseTimer => ({
-            ...p,
-            stopwatch:
-              p.stopwatch.running && p.stopwatch.startedAt == null
-                ? { ...p.stopwatch, startedAt: now }
-                : p.stopwatch,
-            countdown:
-              p.countdown.running && p.countdown.startedAt == null
-                ? { ...p.countdown, startedAt: now }
-                : p.countdown,
-          });
-          setPhase(parsed.phase);
-          setTimers({ focus: rehydrate(parsed.focus), break: rehydrate(parsed.break) });
+          applyCloudSnapshot(parsed);
         }
       } finally {
         cloudLoadDone.current = true;
@@ -92,7 +97,7 @@ export function useTimer() {
             ? { ...timers.break.countdown, baseRemainingSec: calcCountdownRemaining(timers.break.countdown, now), startedAt: null }
             : timers.break.countdown,
       };
-      const cloudSnap: TimeModeSnapshotV2 = { v: 2, phase, focus: normFocus, break: normBreak };
+      const cloudSnap: TimeModeSnapshotV2 = { v: 2, phase, focus: normFocus, break: normBreak, writtenAt: Date.now() };
       setCloudItem(getCloudTimerKey(), JSON.stringify(cloudSnap)).catch(() => { /* ignore */ });
     }
   }, [phase, timers]);
@@ -111,6 +116,62 @@ export function useTimer() {
     const id = window.setInterval(() => setNowMs(Date.now()), 250);
     return () => window.clearInterval(id);
   }, [anyRunning]);
+
+  // Периодическая запись в облако, пока таймер идёт — чтобы на другом устройстве при опросе было актуальное время
+  useEffect(() => {
+    if (!cloudLoadDone.current || !anyRunning) return;
+    const writeNormalized = () => {
+      const now = Date.now();
+      const normFocus: PhaseTimer = {
+        ...timers.focus,
+        stopwatch:
+          timers.focus.stopwatch.running
+            ? { running: true, baseSec: calcStopwatchSec(timers.focus.stopwatch, now), startedAt: null }
+            : timers.focus.stopwatch,
+        countdown:
+          timers.focus.countdown.running
+            ? { ...timers.focus.countdown, baseRemainingSec: calcCountdownRemaining(timers.focus.countdown, now), startedAt: null }
+            : timers.focus.countdown,
+      };
+      const normBreak: PhaseTimer = {
+        ...timers.break,
+        stopwatch:
+          timers.break.stopwatch.running
+            ? { running: true, baseSec: calcStopwatchSec(timers.break.stopwatch, now), startedAt: null }
+            : timers.break.stopwatch,
+        countdown:
+          timers.break.countdown.running
+            ? { ...timers.break.countdown, baseRemainingSec: calcCountdownRemaining(timers.break.countdown, now), startedAt: null }
+            : timers.break.countdown,
+      };
+      const cloudSnap: TimeModeSnapshotV2 = { v: 2, phase, focus: normFocus, break: normBreak, writtenAt: now };
+      setCloudItem(getCloudTimerKey(), JSON.stringify(cloudSnap)).catch(() => { /* ignore */ });
+    };
+    const id = window.setInterval(writeNormalized, 4000);
+    return () => window.clearInterval(id);
+  }, [anyRunning, phase, timers]);
+
+  // Опрос облака в реальном времени — применяем обновления с другого устройства (пауза/старт/время)
+  useEffect(() => {
+    if (!cloudLoadDone.current) return;
+    const key = getCloudTimerKey();
+    const poll = () => {
+      getCloudItem(key).then((raw) => {
+        if (!raw) return;
+        try {
+          const parsed = JSON.parse(raw) as unknown;
+          if (!isValidSnapshotV2(parsed)) return;
+          const writtenAt = parsed.writtenAt ?? 0;
+          if (writtenAt <= lastAppliedWrittenAt.current) return;
+          applyCloudSnapshot(parsed);
+        } catch {
+          /* ignore */
+        }
+      }).catch(() => { /* ignore */ });
+    };
+    const id = window.setInterval(poll, 3000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const pt = timers[phase];
   const elapsed = calcStopwatchSec(pt.stopwatch, nowMs);

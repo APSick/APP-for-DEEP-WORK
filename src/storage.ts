@@ -53,6 +53,8 @@ export type TimeModeSnapshotV2 = {
   phase: Phase;
   focus: PhaseTimer;
   break: PhaseTimer;
+  /** Время записи в облако (ms), для синхронизации в реальном времени — применяем только более новые снапшоты */
+  writtenAt?: number;
 };
 
 export type Project = { id: string; name: string };
