@@ -2,9 +2,13 @@
 import { useEffect, useState } from "react";
 import {
   loadActiveProjectId,
+  loadActiveProjectIdFromCloud,
   loadProjects,
+  loadProjectsFromCloud,
   saveActiveProjectId,
+  saveActiveProjectIdToCloud,
   saveProjects,
+  saveProjectsToCloud,
   uid,
   type Project,
 } from "../storage";
@@ -17,8 +21,21 @@ export function useProjects() {
     return id || list[0]?.id || "";
   });
 
-  useEffect(() => saveProjects(projects), [projects]);
-  useEffect(() => saveActiveProjectId(activeProjectId), [activeProjectId]);
+  useEffect(() => {
+    Promise.all([loadProjectsFromCloud(), loadActiveProjectIdFromCloud()]).then(([cloudProjects, cloudActiveId]) => {
+      if (cloudProjects && cloudProjects.length > 0) setProjects(cloudProjects);
+      if (cloudActiveId) setActiveProjectId(cloudActiveId);
+    }).catch(() => { /* ignore */ });
+  }, []);
+
+  useEffect(() => {
+    saveProjects(projects);
+    saveProjectsToCloud(projects).catch(() => { /* ignore */ });
+  }, [projects]);
+  useEffect(() => {
+    saveActiveProjectId(activeProjectId);
+    saveActiveProjectIdToCloud(activeProjectId).catch(() => { /* ignore */ });
+  }, [activeProjectId]);
 
   const activeProject = projects.find((p) => p.id === activeProjectId) ?? projects[0];
 

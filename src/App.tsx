@@ -1,8 +1,19 @@
 // src/App.tsx
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 import { getTg } from "./telegram";
-import { loadHistory, loadTask, saveHistory, saveTask, uid, type Session } from "./storage";
+import {
+  loadHistory,
+  loadHistoryFromCloud,
+  loadTask,
+  loadTaskFromCloud,
+  saveHistory,
+  saveHistoryToCloud,
+  saveTask,
+  saveTaskToCloud,
+  uid,
+  type Session,
+} from "./storage";
 import { useTimer } from "./hooks/useTimer";
 import { useProjects } from "./hooks/useProjects";
 import { useStats } from "./hooks/useStats";
@@ -36,7 +47,15 @@ export default function App() {
 
   // ===== Task =====
   const [task, setTask] = useState(() => loadTask());
-  useEffect(() => saveTask(task), [task]);
+  useEffect(() => {
+    loadTaskFromCloud().then((cloud) => {
+      setTask(cloud ?? "");
+    }).catch(() => { /* ignore */ });
+  }, []);
+  useEffect(() => {
+    saveTask(task);
+    saveTaskToCloud(task).catch(() => { /* ignore */ });
+  }, [task]);
 
   // ===== Projects =====
   const {
@@ -51,7 +70,23 @@ export default function App() {
 
   // ===== History =====
   const [history, setHistory] = useState<Session[]>(() => loadHistory());
-  useEffect(() => saveHistory(history), [history]);
+  const cloudHistoryLoadDone = useRef(false);
+
+  useEffect(() => {
+    loadHistoryFromCloud().then((cloud) => {
+      if (cloud.length > 0) setHistory(cloud);
+      cloudHistoryLoadDone.current = true;
+    }).catch(() => {
+      cloudHistoryLoadDone.current = true;
+    });
+  }, []);
+
+  useEffect(() => {
+    saveHistory(history);
+    if (cloudHistoryLoadDone.current) {
+      saveHistoryToCloud(history).catch(() => { /* ignore */ });
+    }
+  }, [history]);
 
   // ===== Timer =====
   const timer = useTimer();

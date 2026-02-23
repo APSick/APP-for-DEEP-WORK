@@ -1,10 +1,17 @@
 // src/storage.ts
 /**
  * Хранилище привязано к пользователю: в Telegram — к Telegram user id,
- * вне Telegram — к ключу "anon". Один и тот же аккаунт на разных устройствах
- * видит одну и ту же историю (по id пользователя Telegram).
+ * вне Telegram — к ключу "anon". В TMA история/задача/проекты также синхронизируются
+ * через Telegram Cloud Storage, чтобы на любом устройстве были одни и те же данные.
  */
-import { getTg } from "./telegram";
+import {
+  getCloudItem,
+  getCloudItems,
+  getCloudKeys,
+  getTg,
+  removeCloudItems,
+  setCloudItem,
+} from "./telegram";
 
 export type Phase = "focus" | "break";
 
@@ -170,6 +177,96 @@ export function loadHistory(): Session[] {
 
 export function saveHistory(items: Session[]) {
   safeSetItem(userKey(KEY_HISTORY), JSON.stringify(items));
+}
+
+const CLOUD_HISTORY_PREFIX = "dw_h_";
+const CLOUD_VALUE_MAX = 4096;
+
+/** Загружает историю из облака Telegram (синхронизация между устройствами). Возвращает [] если не в TMA или ошибка. */
+export async function loadHistoryFromCloud(): Promise<Session[]> {
+  const keys = await getCloudKeys();
+  const chunkKeys = keys.filter((k) => k.startsWith(CLOUD_HISTORY_PREFIX)).sort();
+  if (chunkKeys.length === 0) return [];
+  const values = await getCloudItems(chunkKeys);
+  const all: Session[] = [];
+  for (const k of chunkKeys) {
+    const raw = values[k];
+    if (!raw) continue;
+    const chunk = safeJsonParse<unknown>(raw);
+    if (!Array.isArray(chunk)) continue;
+    for (const x of chunk) {
+      if (isValidSession(x)) all.push(normalizeSession(x));
+    }
+  }
+  all.sort((a, b) => b.endedAt - a.endedAt);
+  const seen = new Set<string>();
+  return all.filter((s) => {
+    if (seen.has(s.id)) return false;
+    seen.add(s.id);
+    return true;
+  });
+}
+
+/** Сохраняет историю в облако Telegram. Данные разбиваются на чанки по 4096 символов. */
+export async function saveHistoryToCloud(items: Session[]): Promise<void> {
+  const chunks: string[] = [];
+  let current: Session[] = [];
+  for (const s of items) {
+    const next = [...current, s];
+    const serialized = JSON.stringify(next);
+    if (serialized.length > CLOUD_VALUE_MAX && current.length > 0) {
+      chunks.push(JSON.stringify(current));
+      current = [s];
+    } else {
+      current = next;
+    }
+  }
+  if (current.length > 0) chunks.push(JSON.stringify(current));
+
+  for (let i = 0; i < chunks.length; i++) {
+    await setCloudItem(`${CLOUD_HISTORY_PREFIX}${i}`, chunks[i]);
+  }
+
+  const keys = await getCloudKeys();
+  const toRemove = keys.filter(
+    (k) => k.startsWith(CLOUD_HISTORY_PREFIX) && parseInt(k.slice(CLOUD_HISTORY_PREFIX.length), 10) >= chunks.length
+  );
+  if (toRemove.length > 0) await removeCloudItems(toRemove);
+}
+
+const CLOUD_KEY_TASK = "dw_task";
+const CLOUD_KEY_PROJECTS = "dw_projects";
+const CLOUD_KEY_ACTIVE_PROJECT = "dw_active_project";
+
+export async function loadTaskFromCloud(): Promise<string> {
+  const v = await getCloudItem(CLOUD_KEY_TASK);
+  return v ?? "";
+}
+
+export async function saveTaskToCloud(task: string): Promise<void> {
+  await setCloudItem(CLOUD_KEY_TASK, task ?? "");
+}
+
+export async function loadProjectsFromCloud(): Promise<Project[] | null> {
+  const v = await getCloudItem(CLOUD_KEY_PROJECTS);
+  if (!v) return null;
+  const parsed = safeJsonParse<unknown>(v);
+  if (!Array.isArray(parsed)) return null;
+  const filtered = parsed.filter(isValidProject);
+  return filtered.length > 0 ? filtered : null;
+}
+
+export async function saveProjectsToCloud(items: Project[]): Promise<void> {
+  await setCloudItem(CLOUD_KEY_PROJECTS, JSON.stringify(items));
+}
+
+export async function loadActiveProjectIdFromCloud(): Promise<string> {
+  const v = await getCloudItem(CLOUD_KEY_ACTIVE_PROJECT);
+  return v ?? "";
+}
+
+export async function saveActiveProjectIdToCloud(id: string): Promise<void> {
+  await setCloudItem(CLOUD_KEY_ACTIVE_PROJECT, id ?? "");
 }
 
 export function loadTask(): string {

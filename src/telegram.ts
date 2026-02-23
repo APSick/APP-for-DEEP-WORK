@@ -111,3 +111,55 @@ export function getCloudTimerKey(): string {
   return CLOUD_KEY_TIMER;
 }
 
+/**
+ * Список всех ключей в облачном хранилище.
+ */
+export function getCloudKeys(): Promise<string[]> {
+  const cloud = getTg()?.CloudStorage;
+  if (!cloud) return Promise.resolve([]);
+  return new Promise((resolve) => {
+    cloud.getKeys((err, keys) => {
+      resolve(err == null && Array.isArray(keys) ? keys : []);
+    });
+  });
+}
+
+/**
+ * Читает несколько ключей из облака. Возвращает Record<key, value>.
+ */
+export function getCloudItems(keys: string[]): Promise<Record<string, string>> {
+  const cloud = getTg()?.CloudStorage;
+  if (!cloud || keys.length === 0) return Promise.resolve({});
+  return new Promise((resolve) => {
+    cloud.getItems(keys, (err, values) => {
+      resolve(err == null && values ? values : {});
+    });
+  });
+}
+
+/**
+ * Удаляет ключ из облачного хранилища.
+ */
+export function removeCloudItem(key: string): Promise<boolean> {
+  const cloud = getTg()?.CloudStorage;
+  if (!cloud) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    cloud.removeItem(key, (err, removed) => {
+      resolve(err == null && removed === true);
+    });
+  });
+}
+
+/**
+ * Удаляет несколько ключей из облака.
+ */
+export function removeCloudItems(keys: string[]): Promise<boolean> {
+  const cloud = getTg()?.CloudStorage;
+  if (!cloud || keys.length === 0) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    cloud.removeItems(keys, (err, removed) => {
+      resolve(err == null && removed === true);
+    });
+  });
+}
+
