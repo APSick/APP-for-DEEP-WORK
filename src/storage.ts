@@ -1,4 +1,11 @@
 // src/storage.ts
+/**
+ * Хранилище привязано к пользователю: в Telegram — к Telegram user id,
+ * вне Telegram — к ключу "anon". Один и тот же аккаунт на разных устройствах
+ * видит одну и ту же историю (по id пользователя Telegram).
+ */
+import { getTg } from "./telegram";
+
 export type Phase = "focus" | "break";
 
 export type Session = {
@@ -45,13 +52,23 @@ export type Project = { id: string; name: string };
 
 const KEY_HISTORY = "dw_history_v1";
 const KEY_TASK = "dw_task_v1";
-
 const KEY_PROJECTS = "dw_projects_v1";
 const KEY_ACTIVE_PROJECT = "dw_active_project_v1";
-
 const KEY_TIME = "dw_time_mode_v2";
-// старый ключ (если у тебя раньше было другое имя — это ок, мы мигрируем по структуре)
 const LEGACY_TIME_KEYS = ["dw_time_v1", "dw_time_mode_v1", "dw_time_v0"];
+
+/** Идентификатор пользователя для ключей: tg_<id> в Telegram, иначе anon (локальное устройство) */
+function getStorageUserId(): string {
+  const tg = getTg();
+  const id = tg?.initDataUnsafe?.user?.id;
+  if (id != null && Number.isFinite(id)) return `tg_${id}`;
+  return "anon";
+}
+
+/** Ключ localStorage с привязкой к текущему пользователю */
+function userKey(base: string): string {
+  return `${base}_${getStorageUserId()}`;
+}
 
 /**
  * Проверяет доступность localStorage в текущем окружении
@@ -122,22 +139,58 @@ function isValidSession(x: unknown): x is Session {
   );
 }
 
+/** Старые данные могли сохранять время в секундах — приводим к миллисекундам */
+function normalizeSession(s: Session): Session {
+  const toMs = (t: number) => (t > 1e12 ? t : t * 1000);
+  return {
+    ...s,
+    startedAt: toMs(s.startedAt),
+    endedAt: toMs(s.endedAt),
+  };
+}
+
 export function loadHistory(): Session[] {
-  const v = safeJsonParse<unknown>(safeGetItem(KEY_HISTORY));
+  const key = userKey(KEY_HISTORY);
+  let v = safeJsonParse<unknown>(safeGetItem(key));
+  if (!Array.isArray(v) && getStorageUserId() === "anon") {
+    const legacy = safeJsonParse<unknown>(safeGetItem(KEY_HISTORY));
+    if (Array.isArray(legacy)) {
+      v = legacy;
+      safeSetItem(key, JSON.stringify(v));
+      try {
+        localStorage.removeItem(KEY_HISTORY);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
   if (!Array.isArray(v)) return [];
-  return v.filter(isValidSession);
+  return v.filter(isValidSession).map(normalizeSession);
 }
 
 export function saveHistory(items: Session[]) {
-  safeSetItem(KEY_HISTORY, JSON.stringify(items));
+  safeSetItem(userKey(KEY_HISTORY), JSON.stringify(items));
 }
 
 export function loadTask(): string {
-  return safeGetItem(KEY_TASK) ?? "";
+  const key = userKey(KEY_TASK);
+  let v = safeGetItem(key);
+  if (v === null && getStorageUserId() === "anon") {
+    v = safeGetItem(KEY_TASK);
+    if (v !== null) {
+      safeSetItem(key, v);
+      try {
+        localStorage.removeItem(KEY_TASK);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  return v ?? "";
 }
 
 export function saveTask(task: string) {
-  safeSetItem(KEY_TASK, task ?? "");
+  safeSetItem(userKey(KEY_TASK), task ?? "");
 }
 
 function isValidProject(x: unknown): x is Project {
@@ -147,12 +200,24 @@ function isValidProject(x: unknown): x is Project {
 }
 
 export function loadProjects(): Project[] {
-  const v = safeJsonParse<unknown>(safeGetItem(KEY_PROJECTS));
+  const key = userKey(KEY_PROJECTS);
+  let v = safeJsonParse<unknown>(safeGetItem(key));
+  if (!Array.isArray(v) && getStorageUserId() === "anon") {
+    const legacy = safeJsonParse<unknown>(safeGetItem(KEY_PROJECTS));
+    if (Array.isArray(legacy)) {
+      v = legacy;
+      safeSetItem(key, JSON.stringify(v));
+      try {
+        localStorage.removeItem(KEY_PROJECTS);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
   if (!Array.isArray(v)) return [];
   const filtered = v.filter(isValidProject);
   if (filtered.length > 0) return filtered;
 
-  // дефолтный набор как на твоих скринах
   const def: Project[] = [
     { id: "deep-work", name: "Deep Work" },
     { id: "creative", name: "Креатив" },
@@ -161,21 +226,34 @@ export function loadProjects(): Project[] {
     { id: "training", name: "Тренировка" },
     { id: "other", name: "Другое" },
   ];
-  safeSetItem(KEY_PROJECTS, JSON.stringify(def));
-  safeSetItem(KEY_ACTIVE_PROJECT, def[0].id);
+  safeSetItem(key, JSON.stringify(def));
+  safeSetItem(userKey(KEY_ACTIVE_PROJECT), def[0].id);
   return def;
 }
 
 export function saveProjects(items: Project[]) {
-  safeSetItem(KEY_PROJECTS, JSON.stringify(items));
+  safeSetItem(userKey(KEY_PROJECTS), JSON.stringify(items));
 }
 
 export function loadActiveProjectId(): string {
-  return safeGetItem(KEY_ACTIVE_PROJECT) ?? "";
+  const key = userKey(KEY_ACTIVE_PROJECT);
+  let v = safeGetItem(key);
+  if (v === null && getStorageUserId() === "anon") {
+    v = safeGetItem(KEY_ACTIVE_PROJECT);
+    if (v !== null) {
+      safeSetItem(key, v);
+      try {
+        localStorage.removeItem(KEY_ACTIVE_PROJECT);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  return v ?? "";
 }
 
 export function saveActiveProjectId(id: string) {
-  safeSetItem(KEY_ACTIVE_PROJECT, id);
+  safeSetItem(userKey(KEY_ACTIVE_PROJECT), id);
 }
 
 /**
@@ -204,11 +282,10 @@ export function defaultPhaseTimer(min: number, active: TimerKind = "stopwatch"):
 }
 
 export function loadTimeMode(): TimeModeSnapshotV2 | null {
-  // новый ключ
-  const v2 = safeJsonParse<TimeModeSnapshotV2>(safeGetItem(KEY_TIME));
+  const key = userKey(KEY_TIME);
+  const v2 = safeJsonParse<TimeModeSnapshotV2>(safeGetItem(key));
   if (v2?.v === 2) return v2;
 
-  // пробуем найти legacy
   let legacyRaw: string | null = null;
   for (const k of LEGACY_TIME_KEYS) {
     const v = safeGetItem(k);
@@ -217,7 +294,7 @@ export function loadTimeMode(): TimeModeSnapshotV2 | null {
       break;
     }
   }
-  // иногда legacy могли сохранить и под KEY_TIME, но без v:2
+  if (!legacyRaw) legacyRaw = safeGetItem(key);
   if (!legacyRaw) legacyRaw = safeGetItem(KEY_TIME);
 
   const legacy = safeJsonParse<LegacyTimeSnapshot>(legacyRaw);
@@ -252,13 +329,12 @@ export function loadTimeMode(): TimeModeSnapshotV2 | null {
     break: brk,
   };
 
-  // сохраним уже в новом формате
   saveTimeMode(snap);
   return snap;
 }
 
 export function saveTimeMode(snapshot: TimeModeSnapshotV2) {
-  safeSetItem(KEY_TIME, JSON.stringify(snapshot));
+  safeSetItem(userKey(KEY_TIME), JSON.stringify(snapshot));
 }
 
 export function clampInt(n: number, min: number, max: number): number {
