@@ -116,10 +116,12 @@ export function FocusCard({
 
         <div className="centerArea">
           <div className={`ring ${isRunning ? "ringActive" : ""}`}>
-            <button className="ringButton" onClick={onStartPause}>
-              <div className="ringLabel">{isRunning ? TEXTS.pause : TEXTS.start}</div>
+            <button
+              className="ringButton"
+              onClick={onStartPause}
+              aria-label={isRunning ? TEXTS.pause : TEXTS.start}
+            >
               <div className="ringTime">{fmtMMSS(displaySec)}</div>
-              <div className="ringSub">{pt.active === "stopwatch" ? TEXTS.elapsed : TEXTS.remaining}</div>
             </button>
           </div>
 
