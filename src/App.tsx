@@ -25,6 +25,7 @@ import { FocusCard } from "./components/FocusCard";
 import { StatsCard } from "./components/StatsCard";
 import { ProjectsModal } from "./components/ProjectsModal";
 import { ProfileCard } from "./components/ProfileCard";
+import { MusicCard } from "./components/MusicCard";
 import { TEXTS } from "./constants";
 import { calcCountdownRemaining } from "./utils/timer";
 
@@ -184,12 +185,7 @@ export default function App() {
           />
         )}
 
-        {tab === "music" && (
-          <div className="glass card">
-            <div className="cardTitle">{TEXTS.music}</div>
-            <div className="muted">{TEXTS.musicPlaceholder}</div>
-          </div>
-        )}
+        {tab === "music" && <MusicCard />}
 
         {tab === "stats" && (
           <StatsCard
