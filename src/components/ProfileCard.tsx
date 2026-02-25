@@ -97,7 +97,7 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
               (goalAnim === "up" ? " profileGoalCardStepUp" : "") +
               (goalAnim === "down" ? " profileGoalCardStepDown" : "")
             }
-            onWheel={handleWheel}
+            onWheelCapture={handleWheel}
           >
             <div className="profileGoalValues">
               <div className="profileGoalValue profileGoalNeighbor">
