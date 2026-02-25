@@ -37,7 +37,9 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
   const clampGoal = (m: number) => Math.max(30, Math.min(600, m));
 
   const handleWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
+    // При наведении на блок цели — крутим только цель, страницу не скроллим
     e.preventDefault();
+    e.stopPropagation();
     if (!e.deltaY) return;
 
     const threshold = 80; // чем больше, тем «плавнее» и точнее
@@ -73,19 +75,21 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
         <div className="cardTitle">{TEXTS.profile}</div>
       </div>
 
+      {/* 1 строка: аккаунт на всю ширину */}
+      <div className="profileSectionLabel">аккаунт</div>
+      <div className="profileAccountCard">
+        <div className="profileAccountRow">
+          <div className="profileAvatar" />
+          <div className="profileAccountText">
+            <div className="profileAccountName">{accountName}</div>
+            <div className="profileAccountSub">{accountSub}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2 строка: цель на день + рекомендация */}
       <div className="profileGrid">
         <div className="profileCol">
-          <div className="profileSectionLabel">аккаунт</div>
-          <div className="profileAccountCard">
-            <div className="profileAccountRow">
-              <div className="profileAvatar" />
-              <div className="profileAccountText">
-                <div className="profileAccountName">{accountName}</div>
-                <div className="profileAccountSub">{accountSub}</div>
-              </div>
-            </div>
-          </div>
-
           <div className="profileSectionLabel">цель на день</div>
           <div
             className={
@@ -121,6 +125,7 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
         </div>
       </div>
 
+      {/* 3 строка: подписка */}
       <div className="profileSectionLabel profileSubscriptionLabel">подписка</div>
       <div className="profileSubscriptionCard">
         <div className="profileSubscriptionTitle">Открой полный доступ</div>

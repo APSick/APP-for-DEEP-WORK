@@ -161,7 +161,7 @@ export default function App() {
     <div className="appRoot">
       <TopBar />
 
-      <main className="screen">
+      <main className={tab === "profile" ? "screen screenProfile" : "screen"}>
         {tab === "focus" && (
           <FocusCard
             phase={phase}

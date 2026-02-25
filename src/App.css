@@ -121,6 +121,12 @@
   flex-direction: column;
 }
 
+.screenProfile{
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
 /* Адаптация под разные устройства */
 /* Маленькие телефоны (до 360px) */
 @media (max-width: 359px) {
@@ -243,18 +249,20 @@
   display:flex;
   flex-direction: column;
   align-items:flex-start;
-  gap: 4px;
+  gap: 2px;
   background:
     linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.85)),
     radial-gradient(circle at 50% 0%, rgba(255,234,102,0.14), transparent 65%);
   border: 1px solid rgba(255,255,255,0.18);
   cursor: ns-resize;
   overflow: hidden;
+  max-width: 150px;
+  padding: 8px 11px;
 }
 .profileGoalValues{
   display:flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   align-items:flex-start;
 }
 .profileGoalCardStepUp .profileGoalValues{
@@ -264,11 +272,11 @@
   animation: profileGoalRollDown 180ms ease-out;
 }
 .profileGoalValue{
-  font-size: 13px;
+  font-size: 11px;
   color: var(--muted);
 }
 .profileGoalMain{
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 950;
   color: var(--text);
   border-top: 1px solid rgba(148, 255, 148, 0.55);
