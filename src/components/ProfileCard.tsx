@@ -1,5 +1,5 @@
 // src/components/ProfileCard.tsx
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TEXTS } from "../constants";
 import { getTg } from "../telegram";
 
@@ -28,6 +28,7 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
   const [goalAnim, setGoalAnim] = useState<"" | "up" | "down">("");
   const wheelAccumRef = useRef(0);
   const animTimeoutRef = useRef<number | null>(null);
+  const goalRef = useRef<HTMLDivElement | null>(null);
 
   const progressText =
     todayMinutes > 0
@@ -36,14 +37,11 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
 
   const clampGoal = (m: number) => Math.max(30, Math.min(600, m));
 
-  const handleWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
-    // При наведении на блок цели — крутим только цель, страницу не скроллим
-    e.preventDefault();
-    e.stopPropagation();
-    if (!e.deltaY) return;
+  const applyWheelDelta = (deltaY: number) => {
+    if (!deltaY) return;
 
     const threshold = 80; // чем больше, тем «плавнее» и точнее
-    wheelAccumRef.current += e.deltaY;
+    wheelAccumRef.current += deltaY;
 
     let next = goalCenter;
 
@@ -69,6 +67,23 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
     }, 200);
   };
 
+  useEffect(() => {
+    const el = goalRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      // При наведении на блок цели — крутим только цель, страницу не скроллим
+      e.preventDefault();
+      e.stopPropagation();
+      applyWheelDelta(e.deltaY);
+    };
+
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", onWheel);
+    };
+  }, [goalCenter, onDailyGoalChange]);
+
   return (
     <div className="glass card profileCard">
       <div className="cardHeader">
@@ -89,39 +104,36 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
 
       {/* 2 строка: цель на день + рекомендация */}
       <div className="profileGrid">
-        <div className="profileCol">
-          <div className="profileSectionLabel">цель на день</div>
-          <div
-            className={
-              "profileGoalCard" +
-              (goalAnim === "up" ? " profileGoalCardStepUp" : "") +
-              (goalAnim === "down" ? " profileGoalCardStepDown" : "")
-            }
-            onWheelCapture={handleWheel}
-          >
-            <div className="profileGoalValues">
-              <div className="profileGoalValue profileGoalNeighbor">
-                {goalPrev} мин
-              </div>
-              <div className="profileGoalValue profileGoalMain">
-                {goalCenter} мин
-              </div>
-              <div className="profileGoalValue profileGoalNeighbor">
-                {goalNext} мин
-              </div>
+        <div className="profileSectionLabel">цель на день</div>
+        <div className="profileSectionLabel">рекомендация</div>
+
+        <div
+          ref={goalRef}
+          className={
+            "profileGoalCard" +
+            (goalAnim === "up" ? " profileGoalCardStepUp" : "") +
+            (goalAnim === "down" ? " profileGoalCardStepDown" : "")
+          }
+        >
+          <div className="profileGoalValues">
+            <div className="profileGoalValue profileGoalNeighbor">
+              {goalPrev} мин
+            </div>
+            <div className="profileGoalValue profileGoalMain">
+              {goalCenter} мин
+            </div>
+            <div className="profileGoalValue profileGoalNeighbor">
+              {goalNext} мин
             </div>
           </div>
         </div>
 
-        <div className="profileCol profileColRight">
-          <div className="profileSectionLabel">рекомендация</div>
-          <div className="profileRecommendationCard">
-            <p>
-              Для заметного эффекта рекомендуем держать фокус{" "}
-              <span className="profileTextStrong">не менее 90 минут</span> в день.
-            </p>
-            <p className="profileProgressText">{progressText}</p>
-          </div>
+        <div className="profileRecommendationCard">
+          <p>
+            Для заметного эффекта рекомендуем держать фокус{" "}
+            <span className="profileTextStrong">не менее 90 минут</span> в день.
+          </p>
+          <p className="profileProgressText">{progressText}</p>
         </div>
       </div>
 

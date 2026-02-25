@@ -191,12 +191,9 @@
 .profileGrid{
   display:grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.6fr);
-  gap: 14px;
-}
-.profileCol{
-  display:flex;
-  flex-direction: column;
-  gap: 10px;
+  column-gap: 14px;
+  row-gap: 6px;
+  align-items: start;
 }
 .profileSectionLabel{
   font-size: 11px;
@@ -252,7 +249,12 @@
   cursor: ns-resize;
   overflow: hidden;
   max-width: 150px;
-  padding: 8px 11px;
+  padding: 10px 11px;
+  min-height: 90px;
+}
+.profileGoalCard,
+.profileRecommendationCard{
+  align-self: center;
 }
 .profileGoalValues{
   display:flex;
