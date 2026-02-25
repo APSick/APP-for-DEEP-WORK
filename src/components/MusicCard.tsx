@@ -52,7 +52,8 @@ const TRACKS: Track[] = [
     title: "Piano Collection",
     description: "",
     durationLabel: "",
-    url: "/audio/" + encodeURIComponent("EINAUDI, ZIMMER - Immersive Study, Focus _ Work Music - Soft Felt Piano Collection.mp3"),
+    // Запятая в пути не кодируем — некоторые серверы отдают файл только так
+    url: "/audio/" + "EINAUDI, ZIMMER - Immersive Study, Focus _ Work Music - Soft Felt Piano Collection.mp3".replace(/ /g, "%20"),
   },
 ];
 
@@ -81,6 +82,11 @@ function formatHMMSS(sec: number): string {
   return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+const getAudioUrl = (path: string) => {
+  const base = (import.meta.env.BASE_URL ?? "/").replace(/\/?$/, "/");
+  return path.startsWith("/") ? `${base.replace(/\/$/, "")}${path}` : `${base}${path}`;
+};
+
 export function MusicCard() {
   const [currentId, setCurrentId] = useState<string>(TRACKS[0].id);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -88,6 +94,7 @@ export function MusicCard() {
   const [duration, setDuration] = useState(0);
   const [trackDurations, setTrackDurations] = useState<Record<string, number>>({});
   const [isSeeking, setIsSeeking] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const currentTrack = useMemo(
@@ -101,13 +108,15 @@ export function MusicCard() {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    audio.src = currentTrack.url;
+    setLoadError(null);
     setCurrentTime(0);
     setDuration(0);
+    const url = getAudioUrl(currentTrack.url);
+    audio.src = url;
+    audio.load();
     if (isPlaying) {
-      void audio.play().catch(() => {
-        /* ignore autoplay errors */
-      });
+      const p = audio.play();
+      if (p != null) p.catch(() => { /* ignore autoplay */ });
     }
   }, [currentTrack, isPlaying]);
 
@@ -152,7 +161,7 @@ export function MusicCard() {
         }
       };
       audio.addEventListener("loadedmetadata", onLoaded, { once: true });
-      audio.src = track.url;
+      audio.src = getAudioUrl(track.url);
       audioByTrack.set(track.id, audio);
     });
     return () => {
@@ -226,6 +235,9 @@ export function MusicCard() {
           <div className="musicNowText">
             <div className="musicNowLabel">Сейчас играет</div>
             <div className="musicNowTitle">{currentTrack.title}</div>
+            {loadError === currentTrack.id && (
+              <div className="musicNowError">Ошибка загрузки</div>
+            )}
             <div className="musicNowMeta">
               {duration > 0
                 ? formatHoursMinutes(duration)
@@ -296,7 +308,12 @@ export function MusicCard() {
         </div>
       </div>
 
-      <audio ref={audioRef} loop preload="metadata" />
+      <audio
+        ref={audioRef}
+        loop
+        preload="metadata"
+        onError={() => setLoadError(currentTrack.id)}
+      />
     </div>
   );
 }
