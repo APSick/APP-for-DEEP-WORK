@@ -11,6 +11,8 @@ import {
   saveHistoryToCloud,
   saveTask,
   saveTaskToCloud,
+  loadDailyGoalMinutes,
+  saveDailyGoalMinutes,
   uid,
   type Session,
 } from "./storage";
@@ -22,6 +24,7 @@ import { BottomNav } from "./components/BottomNav";
 import { FocusCard } from "./components/FocusCard";
 import { StatsCard } from "./components/StatsCard";
 import { ProjectsModal } from "./components/ProjectsModal";
+import { ProfileCard } from "./components/ProfileCard";
 import { TEXTS } from "./constants";
 import { calcCountdownRemaining } from "./utils/timer";
 
@@ -67,6 +70,12 @@ export default function App() {
     renameProject,
     deleteProject,
   } = useProjects();
+
+  // ===== Daily goal (profile) =====
+  const [dailyGoalMin, setDailyGoalMin] = useState(() => loadDailyGoalMinutes());
+  useEffect(() => {
+    saveDailyGoalMinutes(dailyGoalMin);
+  }, [dailyGoalMin]);
 
   // ===== History =====
   const [history, setHistory] = useState<Session[]>(() => loadHistory());
@@ -204,10 +213,11 @@ export default function App() {
         )}
 
         {tab === "profile" && (
-          <div className="glass card">
-            <div className="cardTitle">{TEXTS.profile}</div>
-            <div className="muted">{TEXTS.profilePlaceholder}</div>
-          </div>
+          <ProfileCard
+            todayMinutes={stats.todayStats.minutes}
+            dailyGoalMinutes={dailyGoalMin}
+            onDailyGoalChange={setDailyGoalMin}
+          />
         )}
       </main>
 

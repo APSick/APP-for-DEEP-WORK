@@ -176,6 +176,169 @@
   padding-bottom: 11px;
 }
 
+/* ===== Профиль ===== */
+.profileCard{
+  display:flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.profileGrid{
+  display:grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.6fr);
+  gap: 14px;
+}
+@media (max-width: 480px) {
+  .profileGrid{
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.profileCol{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.profileSectionLabel{
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--muted);
+}
+.profileAccountCard,
+.profileGoalCard,
+.profileRecommendationCard,
+.profileSubscriptionCard{
+  border-radius: 20px;
+  border: 1px solid var(--stroke2);
+  background: radial-gradient(circle at 0% 0%, rgba(255,255,255,0.06), rgba(0,0,0,0.9));
+  padding: 12px 13px;
+}
+.profileAccountRow{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+.profileAvatar{
+  width: 42px;
+  height: 42px;
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,0.25), transparent 60%),
+    linear-gradient(135deg, rgba(255,234,102,0.8), rgba(255,200,0,0.5));
+  border: 1px solid rgba(255,255,255,0.22);
+}
+.profileAccountText{
+  display:flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.profileAccountName{
+  font-weight: 900;
+  font-size: 14px;
+}
+.profileAccountSub{
+  font-size: 11px;
+  color: var(--muted);
+}
+.profileGoalCard{
+  display:flex;
+  flex-direction: column;
+  align-items:flex-start;
+  gap: 4px;
+  background:
+    linear-gradient(180deg, rgba(0,0,0,0.9), rgba(0,0,0,0.85)),
+    radial-gradient(circle at 50% 0%, rgba(255,234,102,0.14), transparent 65%);
+  border: 1px solid rgba(255,255,255,0.18);
+  cursor: ns-resize;
+  overflow: hidden;
+}
+.profileGoalValues{
+  display:flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items:flex-start;
+}
+.profileGoalCardStepUp .profileGoalValues{
+  animation: profileGoalRollUp 180ms ease-out;
+}
+.profileGoalCardStepDown .profileGoalValues{
+  animation: profileGoalRollDown 180ms ease-out;
+}
+.profileGoalValue{
+  font-size: 13px;
+  color: var(--muted);
+}
+.profileGoalMain{
+  font-size: 18px;
+  font-weight: 950;
+  color: var(--text);
+  border-top: 1px solid rgba(148, 255, 148, 0.55);
+  border-bottom: 1px solid rgba(148, 255, 148, 0.55);
+  padding: 4px 0;
+  margin: 1px 0;
+}
+.profileGoalNeighbor{
+  opacity: 0.75;
+}
+@keyframes profileGoalRollUp{
+  from{
+    transform: translateY(6px);
+    opacity: 0.8;
+  }
+  to{
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes profileGoalRollDown{
+  from{
+    transform: translateY(-6px);
+    opacity: 0.8;
+  }
+  to{
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.profileRecommendationCard{
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.profileTextStrong{
+  font-weight: 900;
+  color: var(--text);
+}
+.profileProgressText{
+  margin-top: 8px;
+}
+.profileSubscriptionLabel{
+  margin-top: 4px;
+}
+.profileSubscriptionCard{
+  margin-top: 2px;
+}
+.profileSubscriptionTitle{
+  font-size: 14px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+.profileSubscriptionList{
+  margin: 0 0 10px;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.profileSubscriptionButton{
+  padding: 9px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,234,102,0.7);
+  background: radial-gradient(circle at 50% 0%, rgba(255,234,102,0.5), rgba(255,200,0,0.3));
+  color: #111;
+  font-weight: 950;
+  font-size: 13px;
+  cursor: pointer;
+}
+
 .cardHeader{
   display: flex;
   flex-direction: column;

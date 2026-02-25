@@ -64,6 +64,7 @@ const KEY_TASK = "dw_task_v1";
 const KEY_PROJECTS = "dw_projects_v1";
 const KEY_ACTIVE_PROJECT = "dw_active_project_v1";
 const KEY_TIME = "dw_time_mode_v2";
+const KEY_DAILY_GOAL_MIN = "dw_daily_goal_min_v1";
 const LEGACY_TIME_KEYS = ["dw_time_v1", "dw_time_mode_v1", "dw_time_v0"];
 
 /** Идентификатор пользователя для ключей: tg_<id> в Telegram, иначе anon (локальное устройство) */
@@ -290,6 +291,21 @@ export function loadTask(): string {
 
 export function saveTask(task: string) {
   safeSetItem(userKey(KEY_TASK), task ?? "");
+}
+
+/** Цель по фокусу в минутах на день (для профиля). Диапазон 30–600 мин, по умолчанию 300. */
+export function loadDailyGoalMinutes(): number {
+  const raw = safeGetItem(userKey(KEY_DAILY_GOAL_MIN));
+  const def = 300;
+  if (!raw) return def;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return def;
+  return clampInt(n, 30, 600);
+}
+
+export function saveDailyGoalMinutes(minutes: number) {
+  const clamped = clampInt(minutes, 30, 600);
+  safeSetItem(userKey(KEY_DAILY_GOAL_MIN), String(clamped));
 }
 
 function isValidProject(x: unknown): x is Project {
