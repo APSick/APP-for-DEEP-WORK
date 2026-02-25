@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Аудио не в репозитории (файлы >100 MB), клади локально в public/audio/
+public/audio/*.mp3
+public/audio/*.m4a
