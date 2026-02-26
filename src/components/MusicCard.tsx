@@ -7,17 +7,21 @@ type Track = {
   title: string;
   description: string;
   durationLabel: string;
-  url: string;
+  urls: string[];
 };
 
-// Аудио с Vercel Blob (публичный блоб)
+// Аудио с GitHub
 const TRACKS: Track[] = [
-  { id: "midnight-productivity", title: "Midnight Productivity", description: "", durationLabel: "", url: "https://nsblhjxrirdstohb.public.blob.vercel-storage.com/sound%201" },
-  { id: "momentum", title: "Momentum", description: "", durationLabel: "", url: "https://nsblhjxrirdstohb.public.blob.vercel-storage.com/Sound%202" },
-  { id: "deep-work-rad", title: "Deep Work RAD", description: "", durationLabel: "", url: "https://nsblhjxrirdstohb.public.blob.vercel-storage.com/Sound%203" },
-  { id: "interstellar", title: "Interstellar", description: "", durationLabel: "", url: "https://nsblhjxrirdstohb.public.blob.vercel-storage.com/Sound%204" },
-  { id: "gamma-brainwave-music", title: "Gamma Brainwave Music", description: "", durationLabel: "", url: "https://nsblhjxrirdstohb.public.blob.vercel-storage.com/Sound%205" },
-  { id: "piano-collection", title: "Piano Collection", description: "", durationLabel: "", url: "https://nsblhjxrirdstohb.public.blob.vercel-storage.com/Sound%206" },
+  {
+    id: "midnight-productivity",
+    title: "Midnight Productivity",
+    description: "",
+    durationLabel: "",
+    urls: [
+      "https://github.com/APSick/deepwork-audio/raw/refs/heads/main/tracks/track%201-1.MP3",
+      "https://github.com/APSick/deepwork-audio/raw/refs/heads/main/tracks/track%201-2.MP3",
+    ],
+  },
 ];
 
 function formatHoursMinutes(sec: number): string {
@@ -55,6 +59,7 @@ export function MusicCard() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+   const [currentPartIndex, setCurrentPartIndex] = useState(0);
   const [trackDurations, setTrackDurations] = useState<Record<string, number>>({});
   const [isSeeking, setIsSeeking] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -63,6 +68,11 @@ export function MusicCard() {
   const currentTrack = useMemo(
     () => TRACKS.find((t) => t.id === currentId) ?? TRACKS[0],
     [currentId],
+  );
+
+  const currentUrl = useMemo(
+    () => getAudioUrl(currentTrack.urls[Math.min(currentPartIndex, currentTrack.urls.length - 1)]),
+    [currentTrack, currentPartIndex],
   );
 
   const progress = duration > 0 ? Math.min(1, currentTime / duration) : 0;
@@ -74,14 +84,13 @@ export function MusicCard() {
     setLoadError(null);
     setCurrentTime(0);
     setDuration(0);
-    const url = getAudioUrl(currentTrack.url);
-    audio.src = url;
+    audio.src = currentUrl;
     audio.load();
     if (isPlaying) {
       const p = audio.play();
       if (p != null) p.catch(() => { /* ignore autoplay */ });
     }
-  }, [currentTrack, isPlaying]);
+  }, [currentTrack, currentUrl, isPlaying]);
 
   // Синхронизируем play/pause и время с audio
   useEffect(() => {
@@ -114,18 +123,23 @@ export function MusicCard() {
 
   // Загружаем метаданные всех треков, чтобы показывать длительность у каждого
   useEffect(() => {
-    const audioByTrack = new Map<string, HTMLAudioElement>();
+    const audioByTrack: HTMLAudioElement[] = [];
     TRACKS.forEach((track) => {
-      const audio = new Audio();
-      audio.preload = "metadata";
-      const onLoaded = () => {
-        if (Number.isFinite(audio.duration)) {
-          setTrackDurations((prev) => ({ ...prev, [track.id]: audio.duration }));
-        }
-      };
-      audio.addEventListener("loadedmetadata", onLoaded, { once: true });
-      audio.src = getAudioUrl(track.url);
-      audioByTrack.set(track.id, audio);
+      track.urls.forEach((u) => {
+        const audio = new Audio();
+        audio.preload = "metadata";
+        const onLoaded = () => {
+          if (Number.isFinite(audio.duration)) {
+            setTrackDurations((prev) => ({
+              ...prev,
+              [track.id]: (prev[track.id] ?? 0) + audio.duration,
+            }));
+          }
+        };
+        audio.addEventListener("loadedmetadata", onLoaded, { once: true });
+        audio.src = getAudioUrl(u);
+        audioByTrack.push(audio);
+      });
     });
     return () => {
       audioByTrack.forEach((a) => (a.src = ""));
@@ -135,8 +149,28 @@ export function MusicCard() {
   const playTrack = (trackId: string) => {
     const audio = audioRef.current;
     if (!audio) return;
+    setCurrentPartIndex(0);
     setCurrentId(trackId);
     setIsPlaying(true);
+  };
+
+  const handleEnded = () => {
+    const track = currentTrack;
+    if (!track) return;
+    const partsCount = track.urls.length;
+    if (partsCount <= 1) {
+      setIsPlaying(false);
+      return;
+    }
+    const nextPart = currentPartIndex + 1;
+    if (nextPart < partsCount) {
+      setCurrentPartIndex(nextPart);
+      setIsPlaying(true);
+    } else {
+      // все части проиграны — начинаем сначала
+      setCurrentPartIndex(0);
+      setIsPlaying(true);
+    }
   };
 
   const togglePlayPause = () => {
@@ -200,7 +234,7 @@ export function MusicCard() {
             <div className="musicNowTitle">{currentTrack.title}</div>
             {loadError === currentTrack.id && (
               <div className="musicNowError">
-                Ошибка загрузки. На деплое аудио нет в репозитории — добавь файлы в public/audio/ при сборке или задай VITE_AUDIO_BASE_URL (CDN).
+                Ошибка загрузки. Проверь: ссылка открывается в браузере? В Vercel Blob включи CORS для домена приложения.
               </div>
             )}
             <div className="musicNowMeta">
@@ -275,9 +309,10 @@ export function MusicCard() {
 
       <audio
         ref={audioRef}
-        loop
         preload="metadata"
+        crossOrigin="anonymous"
         onError={() => setLoadError(currentTrack.id)}
+        onEnded={handleEnded}
       />
     </div>
   );
