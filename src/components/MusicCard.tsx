@@ -10,51 +10,14 @@ type Track = {
   url: string;
 };
 
-// Локальные файлы (m4a/mp3) клади в папку public/audio/ и указывай url: "/audio/имя-файла.m4a"
+// Аудио с Vercel Blob (публичный блоб)
 const TRACKS: Track[] = [
-  {
-    id: "midnight-productivity",
-    title: "Midnight Productivity",
-    description: "",
-    durationLabel: "",
-    url: "/audio/" + encodeURIComponent("Музыка для работы за компьютером _ Фоновая музыка для концентрации и продуктивности.mp3.m4a"),
-  },
-  {
-    id: "momentum",
-    title: "Momentum",
-    description: "",
-    durationLabel: "",
-    url: "/audio/" + encodeURIComponent("Deep Focus Music – High-Performance Beats for Peak Productivity _ Deep Work.mp3"),
-  },
-  {
-    id: "deep-work-rad",
-    title: "Deep Work RAD",
-    description: "",
-    durationLabel: "",
-    url: "/audio/" + encodeURIComponent("Музыка для продуктивной работы (Гамма-волны 40 Гц).mp3"),
-  },
-  {
-    id: "interstellar",
-    title: "Interstellar",
-    description: "",
-    durationLabel: "",
-    url: "/audio/" + encodeURIComponent("INTERSTELLAR _ INCEPTION Fusion _ Dark Ambient Music for Deep Focus _ Relaxation (4K).mp3"),
-  },
-  {
-    id: "gamma-brainwave-music",
-    title: "Gamma Brainwave Music",
-    description: "",
-    durationLabel: "",
-    url: "/audio/" + encodeURIComponent("Instant Focus Mode – 40Hz Gamma Brainwave Music for Deep Focus _ Productivity.mp3.m4a"),
-  },
-  {
-    id: "piano-collection",
-    title: "Piano Collection",
-    description: "",
-    durationLabel: "",
-    // Запятая в пути не кодируем — некоторые серверы отдают файл только так
-    url: "/audio/" + "EINAUDI, ZIMMER - Immersive Study, Focus _ Work Music - Soft Felt Piano Collection.mp3".replace(/ /g, "%20"),
-  },
+  { id: "midnight-productivity", title: "Midnight Productivity", description: "", durationLabel: "", url: "https://nsblhjxrirdstohb.public.blob.vercel-storage.com/sound%201" },
+  { id: "momentum", title: "Momentum", description: "", durationLabel: "", url: "https://nsblhjxrirdstohb.public.blob.vercel-storage.com/Sound%202" },
+  { id: "deep-work-rad", title: "Deep Work RAD", description: "", durationLabel: "", url: "https://nsblhjxrirdstohb.public.blob.vercel-storage.com/Sound%203" },
+  { id: "interstellar", title: "Interstellar", description: "", durationLabel: "", url: "https://nsblhjxrirdstohb.public.blob.vercel-storage.com/Sound%204" },
+  { id: "gamma-brainwave-music", title: "Gamma Brainwave Music", description: "", durationLabel: "", url: "https://nsblhjxrirdstohb.public.blob.vercel-storage.com/Sound%205" },
+  { id: "piano-collection", title: "Piano Collection", description: "", durationLabel: "", url: "https://nsblhjxrirdstohb.public.blob.vercel-storage.com/Sound%206" },
 ];
 
 function formatHoursMinutes(sec: number): string {
@@ -75,7 +38,14 @@ function formatHMMSS(sec: number): string {
   return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+/** Полный URL для аудио: если уже https — как есть, иначе собираем из BASE_URL или VITE_AUDIO_BASE_URL */
 const getAudioUrl = (path: string) => {
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const external = import.meta.env.VITE_AUDIO_BASE_URL;
+  if (external) {
+    const base = String(external).replace(/\/$/, "");
+    return path.startsWith("/") ? `${base}${path}` : `${base}/${path}`;
+  }
   const base = (import.meta.env.BASE_URL ?? "/").replace(/\/?$/, "/");
   return path.startsWith("/") ? `${base.replace(/\/$/, "")}${path}` : `${base}${path}`;
 };
@@ -229,7 +199,9 @@ export function MusicCard() {
             <div className="musicNowLabel">Сейчас играет</div>
             <div className="musicNowTitle">{currentTrack.title}</div>
             {loadError === currentTrack.id && (
-              <div className="musicNowError">Ошибка загрузки</div>
+              <div className="musicNowError">
+                Ошибка загрузки. На деплое аудио нет в репозитории — добавь файлы в public/audio/ при сборке или задай VITE_AUDIO_BASE_URL (CDN).
+              </div>
             )}
             <div className="musicNowMeta">
               {duration > 0
