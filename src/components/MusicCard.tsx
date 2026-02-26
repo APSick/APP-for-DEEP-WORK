@@ -234,7 +234,7 @@ export function MusicCard() {
             <div className="musicNowTitle">{currentTrack.title}</div>
             {loadError === currentTrack.id && (
               <div className="musicNowError">
-                Ошибка загрузки. Проверь: ссылка открывается в браузере? В Vercel Blob включи CORS для домена приложения.
+                Ошибка загрузки аудио. Проверь, что ссылка открывается в браузере и доступна в твоём регионе.
               </div>
             )}
             <div className="musicNowMeta">
@@ -310,7 +310,6 @@ export function MusicCard() {
       <audio
         ref={audioRef}
         preload="metadata"
-        crossOrigin="anonymous"
         onError={() => setLoadError(currentTrack.id)}
         onEnded={handleEnded}
       />
