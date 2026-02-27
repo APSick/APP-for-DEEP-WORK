@@ -22,20 +22,39 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
 
   const goalCenter = dailyGoalMinutes;
   const goalStep = 5;
-  const goalPrev = Math.max(30, goalCenter - goalStep);
-  const goalNext = Math.min(600, goalCenter + goalStep);
+  const MIN_GOAL = 15;
+  const MAX_GOAL = 300;
+  const goalPrev = Math.max(MIN_GOAL, goalCenter - goalStep);
+  const goalNext = Math.min(MAX_GOAL, goalCenter + goalStep);
 
   const [goalAnim, setGoalAnim] = useState<"" | "up" | "down">("");
   const wheelAccumRef = useRef(0);
   const animTimeoutRef = useRef<number | null>(null);
   const goalRef = useRef<HTMLDivElement | null>(null);
+  const dragStartYRef = useRef<number | null>(null);
+  const dragStartGoalRef = useRef<number | null>(null);
 
   const progressText =
     todayMinutes > 0
       ? `Сегодня уже ${todayMinutes} мин фокуса`
       : "Сегодняшний прогресс появится после старта фокус-сессии.";
 
-  const clampGoal = (m: number) => Math.max(30, Math.min(600, m));
+  const clampGoal = (m: number) => Math.max(MIN_GOAL, Math.min(MAX_GOAL, m));
+
+  const stepGoal = (dir: "up" | "down") => {
+    let next = goalCenter;
+    next += dir === "up" ? -goalStep : goalStep;
+    next = clampGoal(next);
+    if (next === goalCenter) return;
+
+    onDailyGoalChange(next);
+
+    setGoalAnim(dir);
+    if (animTimeoutRef.current != null) window.clearTimeout(animTimeoutRef.current);
+    animTimeoutRef.current = window.setTimeout(() => {
+      setGoalAnim("");
+    }, 200);
+  };
 
   const applyWheelDelta = (deltaY: number) => {
     if (!deltaY) return;
@@ -56,10 +75,10 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
     next = clampGoal(next);
     if (next === goalCenter) return;
 
+    // Направление шага: больше цель — вниз, меньше — вверх
+    const direction: "up" | "down" = next > goalCenter ? "down" : "up";
     onDailyGoalChange(next);
 
-    // Анимация «барабана» — вверх/вниз в зависимости от направления шага
-    const direction = next > goalCenter ? "down" : "up";
     setGoalAnim(direction);
     if (animTimeoutRef.current != null) window.clearTimeout(animTimeoutRef.current);
     animTimeoutRef.current = window.setTimeout(() => {
@@ -83,6 +102,67 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
       el.removeEventListener("wheel", onWheel);
     };
   }, [goalCenter, onDailyGoalChange]);
+
+  const startDrag = (clientY: number) => {
+    dragStartYRef.current = clientY;
+    dragStartGoalRef.current = goalCenter;
+  };
+
+  const updateDrag = (clientY: number) => {
+    if (dragStartYRef.current == null || dragStartGoalRef.current == null) return;
+    const dy = clientY - dragStartYRef.current;
+    const pixelsPerStep = 12;
+    if (Math.abs(dy) < pixelsPerStep) return;
+
+    const steps = Math.round(dy / pixelsPerStep);
+    let next = clampGoal(dragStartGoalRef.current + steps * goalStep);
+    if (next === goalCenter) return;
+
+    onDailyGoalChange(next);
+
+    const direction: "up" | "down" = next > goalCenter ? "down" : "up";
+    setGoalAnim(direction);
+    if (animTimeoutRef.current != null) window.clearTimeout(animTimeoutRef.current);
+    animTimeoutRef.current = window.setTimeout(() => {
+      setGoalAnim("");
+    }, 200);
+  };
+
+  const endDrag = () => {
+    dragStartYRef.current = null;
+    dragStartGoalRef.current = null;
+  };
+
+  const handleTouchStart = (e: any) => {
+    if (!e.touches || e.touches.length === 0) return;
+    const t = e.touches[0];
+    startDrag(t.clientY);
+  };
+
+  const handleTouchMove = (e: any) => {
+    if (!e.touches || e.touches.length === 0) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    updateDrag(t.clientY);
+  };
+
+  const handleTouchEnd = () => {
+    endDrag();
+  };
+
+  const handleMouseDown = (e: any) => {
+    startDrag(e.clientY);
+    const onMove = (ev: MouseEvent) => {
+      updateDrag(ev.clientY);
+    };
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      endDrag();
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
 
   return (
     <div className="glass card profileCard">
@@ -109,6 +189,11 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
 
         <div
           ref={goalRef}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
+          onMouseDown={handleMouseDown}
           className={
             "profileGoalCard" +
             (goalAnim === "up" ? " profileGoalCardStepUp" : "") +
