@@ -19,7 +19,24 @@ const TRACKS: Track[] = [
     durationLabel: "",
     urls: [
       "https://github.com/APSick/deepwork-audio/raw/refs/heads/main/tracks/track%201-1.MP3",
-      "https://github.com/APSick/deepwork-audio/raw/refs/heads/main/tracks/track%201-2.MP3",
+    ],
+  },
+  {
+    id: "momentum",
+    title: "Momentum",
+    description: "",
+    durationLabel: "",
+    urls: [
+      "https://github.com/APSick/deepwork-audio/raw/refs/heads/main/tracks/track%202.MP3",
+    ],
+  },
+  {
+    id: "deep-work-rad",
+    title: "Deep Work RAD",
+    description: "",
+    durationLabel: "",
+    urls: [
+      "https://github.com/APSick/deepwork-audio/raw/refs/heads/main/tracks/track%2003.MP3",
     ],
   },
 ];
