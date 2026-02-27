@@ -185,7 +185,7 @@ export default function App() {
           />
         )}
 
-        {tab === "music" && <MusicCard />}
+        <MusicCard isVisible={tab === "music"} />
 
         {tab === "stats" && (
           <StatsCard

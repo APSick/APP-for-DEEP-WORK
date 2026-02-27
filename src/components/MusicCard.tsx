@@ -59,6 +59,10 @@ function formatHMMSS(sec: number): string {
   return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+type MusicCardProps = {
+  isVisible?: boolean;
+};
+
 /** Полный URL для аудио: если уже https — как есть, иначе собираем из BASE_URL или VITE_AUDIO_BASE_URL */
 const getAudioUrl = (path: string) => {
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
@@ -71,7 +75,7 @@ const getAudioUrl = (path: string) => {
   return path.startsWith("/") ? `${base.replace(/\/$/, "")}${path}` : `${base}${path}`;
 };
 
-export function MusicCard() {
+export function MusicCard({ isVisible = true }: MusicCardProps) {
   const [currentId, setCurrentId] = useState<string>(TRACKS[0].id);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -229,7 +233,10 @@ export function MusicCard() {
   const handleSliderMouseUp = () => setIsSeeking(false);
 
   return (
-    <div className="glass card musicCard">
+    <div
+      className="glass card musicCard"
+      style={isVisible ? undefined : { display: "none" }}
+    >
       <div className="cardHeader">
         <div className="cardTitle">{TEXTS.music}</div>
         <div className="musicCardSubtitle">Плеер для продуктивной работы</div>
