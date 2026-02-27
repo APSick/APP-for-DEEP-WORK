@@ -41,21 +41,6 @@ export function ProfileCard({ todayMinutes, dailyGoalMinutes, onDailyGoalChange 
 
   const clampGoal = (m: number) => Math.max(MIN_GOAL, Math.min(MAX_GOAL, m));
 
-  const stepGoal = (dir: "up" | "down") => {
-    let next = goalCenter;
-    next += dir === "up" ? -goalStep : goalStep;
-    next = clampGoal(next);
-    if (next === goalCenter) return;
-
-    onDailyGoalChange(next);
-
-    setGoalAnim(dir);
-    if (animTimeoutRef.current != null) window.clearTimeout(animTimeoutRef.current);
-    animTimeoutRef.current = window.setTimeout(() => {
-      setGoalAnim("");
-    }, 200);
-  };
-
   const applyWheelDelta = (deltaY: number) => {
     if (!deltaY) return;
 
