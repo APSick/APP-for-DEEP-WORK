@@ -39,6 +39,33 @@ const TRACKS: Track[] = [
       "https://github.com/APSick/deepwork-audio/raw/refs/heads/main/tracks/track%2003.MP3",
     ],
   },
+  {
+    id: "interstellar",
+    title: "Interstellar",
+    description: "",
+    durationLabel: "",
+    urls: [
+      "https://github.com/APSick/deepwork-audio/raw/refs/heads/main/tracks/track%204.MP3",
+    ],
+  },
+  {
+    id: "gamma-brainwave-music",
+    title: "Gamma Brainwave Music",
+    description: "",
+    durationLabel: "",
+    urls: [
+      "https://github.com/APSick/deepwork-audio/raw/refs/heads/main/tracks/track%205.MP3",
+    ],
+  },
+  {
+    id: "piano-collection",
+    title: "Piano Collection",
+    description: "",
+    durationLabel: "",
+    urls: [
+      "https://github.com/APSick/deepwork-audio/raw/refs/heads/main/tracks/track%206.MP3",
+    ],
+  },
 ];
 
 function formatHoursMinutes(sec: number): string {
